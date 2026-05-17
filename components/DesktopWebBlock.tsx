@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { View, Text, StyleSheet, Pressable, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, typography, spacing } from '@/theme';
-import { MOBILE_WEB_MAX_WIDTH } from '@/lib/mobileWeb';
 
 function getSiteUrl(): string {
   if (Platform.OS === 'web' && typeof window !== 'undefined') {
@@ -27,10 +26,10 @@ export function DesktopWebBlock({ onDevBypass }: DesktopWebBlockProps) {
       ]}
     >
       <Text style={styles.brand}>Wandr</Text>
-      <Text style={styles.title}>Built for your phone</Text>
+      <Text style={styles.title}>Built for mobile</Text>
       <Text style={styles.body}>
-        Wandr on the web is optimized for mobile. Open this link on your iPhone or Android
-        browser, then add it to your home screen for an app-like experience.
+        Open this link on your iPhone, or on your iPad in portrait mode. Add it to your home
+        screen for an app-like experience.
       </Text>
 
       {siteUrl ? (
@@ -43,9 +42,7 @@ export function DesktopWebBlock({ onDevBypass }: DesktopWebBlockProps) {
       ) : null}
 
       {__DEV__ ? (
-        <Text style={styles.hint}>
-          Dev: narrow the window below {MOBILE_WEB_MAX_WIDTH}px or use the bypass below.
-        </Text>
+        <Text style={styles.hint}>Dev: use a phone UA or the bypass below to test on desktop.</Text>
       ) : null}
 
       {__DEV__ && onDevBypass ? (

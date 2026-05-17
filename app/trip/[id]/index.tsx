@@ -29,6 +29,7 @@ import { getNextActivities } from '@/utils/itinerary';
 import { formatDateRange, formatTripDate } from '@/utils/dates';
 import { confirmAction } from '@/lib/confirm';
 import { getErrorMessage } from '@/lib/errors';
+import { navigateBack } from '@/lib/navigation';
 import { colors, typography, spacing } from '@/theme';
 
 export default function TripDetailScreen() {
@@ -48,6 +49,15 @@ export default function TripDetailScreen() {
   if (isLoading || !trip) {
     return (
       <View style={[styles.container, styles.centered]}>
+        <Pressable
+          onPress={() => navigateBack('/(tabs)/trips')}
+          style={[styles.backButton, { top: insets.top + spacing.sm, left: spacing.xl }]}
+          hitSlop={12}
+          accessibilityRole="button"
+          accessibilityLabel="Go back"
+        >
+          <Ionicons name="chevron-back" size={24} color={colors.primary} />
+        </Pressable>
         <Text style={styles.loadingText}>Loading...</Text>
       </View>
     );
@@ -114,6 +124,8 @@ export default function TripDetailScreen() {
           imageUrl={trip.coverUrl}
           startDate={trip.startDate}
           endDate={trip.endDate}
+          showBack
+          backHref="/(tabs)/trips"
         />
         <View style={[styles.content, { paddingBottom: insets.bottom + 32 }]}>
           <View style={styles.actions}>
@@ -201,6 +213,16 @@ export default function TripDetailScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   centered: { alignItems: 'center', justifyContent: 'center' },
+  backButton: {
+    position: 'absolute',
+    zIndex: 10,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.glass,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   loadingText: { ...typography.body },
   content: { paddingHorizontal: spacing.xl, marginTop: -24 },
   actions: {
