@@ -1,25 +1,26 @@
-import { View, StyleSheet, ActivityIndicator, Alert, Platform } from 'react-native';
+import { useState } from 'react';
+import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { ScreenHeader } from '@/components';
 import { TripForm } from '@/features/trips/ui/TripForm';
 import { useTrip, useUpdateTrip } from '@/features/trips/hooks/useTrips';
 import type { TripFormData } from '@/features/trips/schemas/tripSchema';
 import { getErrorMessage } from '@/lib/errors';
-import { colors, spacing } from '@/theme';
+import { colors, spacing, typography } from '@/theme';
 
 export default function EditTripScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { data: trip, isLoading } = useTrip(id);
   const updateTrip = useUpdateTrip();
+  const [formError, setFormError] = useState('');
 
   const onSubmit = async (data: TripFormData) => {
+    setFormError('');
     try {
       await updateTrip.mutateAsync({ id, form: data });
       router.back();
     } catch (e) {
-      const message = getErrorMessage(e, 'Could not save trip.');
-      if (Platform.OS === 'web') globalThis.alert(message);
-      else Alert.alert('Save failed', message);
+      setFormError(getErrorMessage(e, undefined, 'trip-save'));
     }
   };
 
@@ -35,6 +36,7 @@ export default function EditTripScreen() {
     <View style={styles.container}>
       <ScreenHeader title="Edit Trip" showBack backHref={`/trip/${id}`} />
       <View style={styles.form}>
+        {formError ? <Text style={styles.formError}>{formError}</Text> : null}
         <TripForm
           defaultValues={{
             title: trip.title,
@@ -57,5 +59,6 @@ export default function EditTripScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   form: { flex: 1, paddingHorizontal: spacing.xl },
+  formError: { ...typography.caption, color: colors.danger, marginBottom: spacing.md },
   loading: { flex: 1, backgroundColor: colors.background, alignItems: 'center', justifyContent: 'center' },
 });

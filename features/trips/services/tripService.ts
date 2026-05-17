@@ -2,6 +2,7 @@ import { getJson, setJson, StorageKeys } from '@/lib/mmkv';
 import { mapDbDay, mapDbTrip, mapDayToDb, mapTripToDb } from '@/lib/supabaseMappers';
 import { getSupabaseClient, requireSupabaseClient } from '@/services/supabase/client';
 import { uploadTripCover } from '@/services/storage/upload';
+import { permissionDeniedError } from '@/lib/errors';
 import { generateId } from '@/lib/ids';
 import { generateDayDates } from '@/utils/dates';
 import { getTripStatus } from '@/utils/dates';
@@ -238,6 +239,7 @@ export async function updateTrip(id: string, form: TripFormData): Promise<Trip> 
     .select()
     .single();
   if (error) throw error;
+  if (!data) throw permissionDeniedError('trip-save');
   const saved = enrichTripStatus(mapDbTrip(data));
   trips[index] = saved;
   saveLocalTrips(trips);
@@ -246,8 +248,9 @@ export async function updateTrip(id: string, form: TripFormData): Promise<Trip> 
 
 export async function deleteTrip(id: string): Promise<void> {
   const client = requireSupabaseClient();
-  const { error } = await client.from('trips').delete().eq('id', id);
+  const { data, error } = await client.from('trips').delete().eq('id', id).select('id');
   if (error) throw error;
+  if (!data?.length) throw permissionDeniedError('trip-delete');
   saveLocalTrips(getLocalTrips().filter((t) => t.id !== id));
   saveLocalDays(getLocalDays().filter((d) => d.tripId !== id));
 }

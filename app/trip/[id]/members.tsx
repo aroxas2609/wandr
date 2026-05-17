@@ -64,7 +64,7 @@ export default function MembersScreen() {
         );
       }
     } catch (e) {
-      const message = getErrorMessage(e, 'Could not create invite. Try again.');
+      const message = getErrorMessage(e, undefined, 'trip-invite');
       if (__DEV__) console.warn('[Wandr] invite failed:', e);
       setFeedback({ status: 'error', message });
       if (Platform.OS !== 'web') {
@@ -100,7 +100,7 @@ export default function MembersScreen() {
             setFeedback(null);
           }
         } catch (e) {
-          const message = getErrorMessage(e, 'Could not remove. Try again.');
+          const message = getErrorMessage(e, undefined, 'trip-members');
           if (__DEV__) console.warn('[Wandr] remove failed:', e);
           setFeedback({ status: 'error', message });
           if (Platform.OS !== 'web') {

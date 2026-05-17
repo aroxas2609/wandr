@@ -76,11 +76,11 @@ export default function TripDetailScreen() {
           await deleteTrip.mutateAsync(id);
           router.replace('/(tabs)/trips');
         } catch (e) {
-          const message = getErrorMessage(e, 'Could not delete trip.');
+          const message = getErrorMessage(e, undefined, 'trip-delete');
           if (Platform.OS === 'web') {
             globalThis.alert(message);
           } else {
-            Alert.alert('Delete failed', message);
+            Alert.alert('Cannot delete trip', message);
           }
         } finally {
           setDeleting(false);
