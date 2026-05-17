@@ -92,10 +92,6 @@ export default function LoginScreen() {
           onPress={() => router.push('/(auth)/forgot-password')}
           style={styles.forgotButton}
         />
-        <View style={styles.socialRow}>
-          <PremiumButton label="Apple" variant="outline" onPress={() => {}} disabled />
-          <PremiumButton label="Google" variant="outline" onPress={() => {}} disabled />
-        </View>
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -106,5 +102,4 @@ const styles = StyleSheet.create({
   scroll: { paddingHorizontal: spacing.xl, paddingBottom: 40 },
   error: { ...typography.caption, color: colors.danger, marginBottom: 12 },
   forgotButton: { marginTop: 8 },
-  socialRow: { flexDirection: 'row', gap: 12, marginTop: 16, opacity: 0.5 },
 });

@@ -44,6 +44,7 @@ const SLIDES = [
 
 export default function OnboardingScreen() {
   const [index, setIndex] = useState(0);
+  const listRef = useRef<FlatList<(typeof SLIDES)[number]>>(null);
   const insets = useSafeAreaInsets();
   const setOnboardingComplete = useAuthStore((s) => s.setOnboardingComplete);
 
@@ -53,6 +54,11 @@ export default function OnboardingScreen() {
       Haptics.selectionAsync();
       setIndex(newIndex);
     }
+  };
+
+  const goToSlide = (nextIndex: number) => {
+    listRef.current?.scrollToOffset({ offset: nextIndex * width, animated: true });
+    setIndex(nextIndex);
   };
 
   const finish = () => {
@@ -67,11 +73,14 @@ export default function OnboardingScreen() {
         style={StyleSheet.absoluteFill}
       />
       <FlatList
+        ref={listRef}
         data={SLIDES}
         horizontal
         pagingEnabled
         showsHorizontalScrollIndicator={false}
         onScroll={onScroll}
+        scrollEventThrottle={16}
+        getItemLayout={(_, i) => ({ length: width, offset: width * i, index: i })}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
           <View style={[styles.slide, { width }]}>
@@ -91,7 +100,7 @@ export default function OnboardingScreen() {
           label={index === SLIDES.length - 1 ? 'Start Planning' : 'Continue'}
           onPress={() => {
             if (index < SLIDES.length - 1) {
-              setIndex(index + 1);
+              goToSlide(index + 1);
             } else {
               finish();
             }
