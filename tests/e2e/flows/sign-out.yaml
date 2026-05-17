@@ -1,0 +1,5 @@
+appId: host.exp.exponent
+---
+- launchApp
+- tapOn: "Profile"
+- tapOn: "Sign Out"

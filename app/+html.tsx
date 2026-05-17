@@ -20,6 +20,24 @@ export default function Root({ children }: { children: React.ReactNode }) {
 
         {/* Using raw CSS styles as an escape-hatch to ensure the background color never flickers in dark-mode. */}
         <style dangerouslySetInnerHTML={{ __html: responsiveBackground }} />
+        <link
+          rel="stylesheet"
+          href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+          integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+          crossOrigin=""
+        />
+        <style
+          dangerouslySetInnerHTML={{
+            __html: `
+.wandr-leaflet-root, .wandr-leaflet-root .leaflet-container {
+  width: 100%;
+  height: 100%;
+  min-height: 320px;
+}
+.leaflet-container { background: #1c1c22; }
+`,
+          }}
+        />
         {/* Add any additional <head> elements that you want globally available on web... */}
       </head>
       <body>{children}</body>

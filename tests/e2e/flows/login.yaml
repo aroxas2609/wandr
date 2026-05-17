@@ -1,0 +1,9 @@
+appId: host.exp.Exponent
+---
+- launchApp
+- tapOn: "Sign In"
+# Set MAESTRO_TEST_EMAIL and MAESTRO_TEST_PASSWORD in your environment, or edit below.
+- inputText: "${MAESTRO_TEST_EMAIL}"
+- tapOn: "Password"
+- inputText: "${MAESTRO_TEST_PASSWORD}"
+- tapOn: "Sign In"
