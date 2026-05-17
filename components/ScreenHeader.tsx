@@ -1,8 +1,9 @@
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { router, type Href } from 'expo-router';
+import type { Href } from 'expo-router';
 import { Platform } from 'react-native';
+import { navigateBack } from '@/lib/navigation';
 import { colors, typography, spacing } from '@/theme';
 
 interface ScreenHeaderProps {
@@ -13,18 +14,6 @@ interface ScreenHeaderProps {
   backHref?: Href;
   rightAction?: React.ReactNode;
   large?: boolean;
-}
-
-function handleBack(backHref?: Href) {
-  if (router.canGoBack()) {
-    router.back();
-    return;
-  }
-  if (backHref) {
-    router.replace(backHref);
-    return;
-  }
-  router.replace('/(tabs)');
 }
 
 export function ScreenHeader({
@@ -42,7 +31,7 @@ export function ScreenHeader({
       <View style={styles.row}>
         {showBack ? (
           <Pressable
-            onPress={() => handleBack(backHref)}
+            onPress={() => navigateBack(backHref)}
             style={styles.backButton}
             hitSlop={12}
             accessibilityRole="button"

@@ -4,6 +4,7 @@ import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import { queryClient } from '@/lib/queryClient';
 import { useAuthStore } from '@/stores/authStore';
 import { useNetworkStatus } from '@/hooks/useNetworkStatus';
+import { WebNavigationBridge } from '@/components/WebNavigationBridge';
 import { restoreSupabaseSession, hasSupabaseSession } from '@/services/auth/sessionPersistence';
 import { tripKeys } from '@/features/trips/hooks/useTrips';
 import { getJson, StorageKeys } from '@/lib/mmkv';
@@ -51,6 +52,7 @@ export function AppProviders({ children }: AppProvidersProps) {
       <QueryClientProvider client={queryClient}>
         <BottomSheetModalProvider>
           <NetworkSyncBridge />
+          <WebNavigationBridge />
           {children}
         </BottomSheetModalProvider>
       </QueryClientProvider>

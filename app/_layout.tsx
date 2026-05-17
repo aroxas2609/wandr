@@ -1,5 +1,6 @@
 import '../global.css';
 import { useEffect } from 'react';
+import { Platform } from 'react-native';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import {
@@ -47,7 +48,9 @@ export default function RootLayout() {
         screenOptions={{
           headerShown: false,
           contentStyle: { backgroundColor: colors.background },
-          animation: 'fade',
+          animation: Platform.OS === 'web' ? 'slide_from_right' : 'fade',
+          gestureEnabled: Platform.OS !== 'web',
+          fullScreenGestureEnabled: Platform.OS === 'ios',
         }}
       >
         <Stack.Screen name="index" />
