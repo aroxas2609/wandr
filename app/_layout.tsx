@@ -47,7 +47,10 @@ export default function RootLayout() {
         <Stack
         screenOptions={{
           headerShown: false,
-          contentStyle: { backgroundColor: colors.background },
+          contentStyle: {
+            backgroundColor: colors.background,
+            flex: Platform.OS === 'web' ? 1 : undefined,
+          },
           animation: Platform.OS === 'web' ? 'slide_from_right' : 'fade',
           gestureEnabled: Platform.OS !== 'web',
           fullScreenGestureEnabled: Platform.OS === 'ios',

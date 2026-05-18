@@ -4,18 +4,19 @@ import { StyleSheet, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
-import { colors } from '@/theme';
+import { colors, spacing } from '@/theme';
 
 const TAB_BAR_BASE = 56;
 const TAB_BAR_PADDING_TOP = 8;
 
 export default function TabLayout() {
   const insets = useSafeAreaInsets();
-  const webBottomInset = Platform.OS === 'web' ? insets.bottom : 0;
+  const bottomInset =
+    Platform.OS === 'web' ? Math.max(insets.bottom, 0) : Platform.OS === 'ios' ? 0 : 0;
   const tabBarHeight =
     Platform.OS === 'ios'
       ? 88
-      : TAB_BAR_BASE + TAB_BAR_PADDING_TOP + webBottomInset;
+      : TAB_BAR_BASE + TAB_BAR_PADDING_TOP + bottomInset;
 
   const useBlurTabBar = Platform.OS === 'ios' || Platform.OS === 'web';
 
@@ -29,7 +30,8 @@ export default function TabLayout() {
           ...styles.tabBar,
           height: tabBarHeight,
           paddingTop: TAB_BAR_PADDING_TOP,
-          paddingBottom: Platform.OS === 'web' ? webBottomInset : undefined,
+          paddingBottom:
+            Platform.OS === 'web' ? Math.max(bottomInset, spacing.sm) : undefined,
           backgroundColor: useBlurTabBar ? 'transparent' : colors.elevated,
         },
         tabBarBackground: () =>
@@ -78,6 +80,9 @@ export default function TabLayout() {
 const styles = StyleSheet.create({
   tabBar: {
     position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
     borderTopColor: colors.glassBorder,
     borderTopWidth: 1,
   },

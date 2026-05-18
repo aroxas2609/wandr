@@ -1,5 +1,7 @@
 import { QueryClientProvider } from '@tanstack/react-query';
+import { Platform, StyleSheet } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { WebSafeAreaProvider } from '@/providers/WebSafeAreaProvider';
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import { queryClient } from '@/lib/queryClient';
 import { useAuthStore } from '@/stores/authStore';
@@ -49,15 +51,27 @@ export function AppProviders({ children }: AppProvidersProps) {
   }, [hydrate, setSessionReady, signOut]);
 
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
-      <QueryClientProvider client={queryClient}>
-        <BottomSheetModalProvider>
-          <NetworkSyncBridge />
-          <WebNavigationBridge />
-          <AppMessageHost />
-          {children}
-        </BottomSheetModalProvider>
-      </QueryClientProvider>
-    </GestureHandlerRootView>
+    <WebSafeAreaProvider>
+      <GestureHandlerRootView
+        style={Platform.OS === 'web' ? styles.webRoot : styles.nativeRoot}
+      >
+        <QueryClientProvider client={queryClient}>
+          <BottomSheetModalProvider>
+            <NetworkSyncBridge />
+            <WebNavigationBridge />
+            <AppMessageHost />
+            {children}
+          </BottomSheetModalProvider>
+        </QueryClientProvider>
+      </GestureHandlerRootView>
+    </WebSafeAreaProvider>
   );
 }
+
+const styles = StyleSheet.create({
+  nativeRoot: { flex: 1 },
+  webRoot: {
+    flex: 1,
+    backgroundColor: '#0D0D0F',
+  },
+});

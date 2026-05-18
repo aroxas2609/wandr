@@ -49,13 +49,29 @@ export default function Root({ children }: { children: React.ReactNode }) {
 }
 
 const webNativeStyles = `
-html, body, #root {
+html {
+  height: 100%;
+  height: -webkit-fill-available;
   background-color: ${APP_BACKGROUND};
-  min-height: 100%;
 }
 body {
-  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  margin: 0;
+  padding: 0;
+  min-height: 100%;
+  min-height: 100dvh;
+  min-height: -webkit-fill-available;
+  background-color: ${APP_BACKGROUND};
   overscroll-behavior: none;
+}
+#root {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  width: 100%;
+  min-height: 100%;
+  min-height: 100dvh;
+  min-height: -webkit-fill-available;
+  background-color: ${APP_BACKGROUND};
 }
 button, a, [role="button"], input, textarea, select {
   -webkit-tap-highlight-color: transparent;
