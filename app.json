@@ -35,7 +35,12 @@
     "web": {
       "bundler": "metro",
       "output": "static",
-      "favicon": "./assets/images/favicon.png"
+      "favicon": "./assets/images/favicon.png",
+      "name": "Wandr",
+      "shortName": "Wandr",
+      "themeColor": "#0D0D0F",
+      "backgroundColor": "#0D0D0F",
+      "display": "standalone"
     },
     "plugins": [
       "expo-router",

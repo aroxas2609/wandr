@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Pressable, Alert, Share, Platform } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Pressable, Share, Platform } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import {
   ScreenHeader,
@@ -14,6 +14,7 @@ import { inviteMemberByEmail, removeMember } from '@/features/collaboration/serv
 import { useAuthStore } from '@/stores/authStore';
 import { confirmAction } from '@/lib/confirm';
 import { getErrorMessage } from '@/lib/errors';
+import { showAppMessage } from '@/stores/appMessageStore';
 import { colors, typography, spacing } from '@/theme';
 
 type InviteFeedback =
@@ -31,7 +32,11 @@ export default function MembersScreen() {
   const [loading, setLoading] = useState(false);
 
   const isOwner = trip?.ownerId === user?.id;
-  const memberNames = members.map((m) => m.fullName);
+  const displayName = (m: (typeof members)[number]) =>
+    user?.id === m.userId && user.fullName && user.fullName !== 'Traveler'
+      ? user.fullName
+      : m.fullName;
+  const memberNames = members.map(displayName);
   const inviteToken =
     feedback && feedback.status !== 'error' ? feedback.token : null;
 
@@ -55,21 +60,17 @@ export default function MembersScreen() {
         : { status: 'pending', email: invited, token };
       setFeedback(nextFeedback);
 
-      if (Platform.OS !== 'web') {
-        Alert.alert(
-          addedToTrip ? 'Added to trip' : 'Invite sent',
-          addedToTrip
-            ? `${invited} has a Wandr account and can open this trip now.`
-            : `${invited} is not on Wandr yet. Share the invite code with them.`
-        );
-      }
+      showAppMessage(
+        addedToTrip ? 'Added to trip' : 'Invite sent',
+        addedToTrip
+          ? `${invited} has a Wandr account and can open this trip now.`
+          : `${invited} is not on Wandr yet. Share the invite code with them.`
+      );
     } catch (e) {
       const message = getErrorMessage(e, undefined, 'trip-invite');
       if (__DEV__) console.warn('[Wandr] invite failed:', e);
       setFeedback({ status: 'error', message });
-      if (Platform.OS !== 'web') {
-        Alert.alert('Invite failed', message);
-      }
+      showAppMessage('Invite failed', message);
     } finally {
       setLoading(false);
     }
@@ -84,7 +85,7 @@ export default function MembersScreen() {
 
   const handleRemoveMember = (member: (typeof members)[number]) => {
     const title = member.status === 'pending' ? 'Remove invite?' : 'Remove member?';
-    confirmAction(title, member.fullName, {
+    confirmAction(title, displayName(member), {
       confirmLabel: 'Remove',
       destructive: true,
       onConfirm: async () => {
@@ -103,9 +104,7 @@ export default function MembersScreen() {
           const message = getErrorMessage(e, undefined, 'trip-members');
           if (__DEV__) console.warn('[Wandr] remove failed:', e);
           setFeedback({ status: 'error', message });
-          if (Platform.OS !== 'web') {
-            Alert.alert('Remove failed', message);
-          }
+          showAppMessage('Remove failed', message);
         }
       },
     });
@@ -126,7 +125,7 @@ export default function MembersScreen() {
           {members.map((m) => (
             <View key={m.userId} style={styles.memberRow}>
               <View>
-                <Text style={styles.memberName}>{m.fullName}</Text>
+                <Text style={styles.memberName}>{displayName(m)}</Text>
                 <Text style={styles.role}>
                   {m.status === 'pending' ? 'Pending invite' : m.role}
                   {m.status === 'pending' && m.inviteToken ? ` · ${m.inviteToken}` : ''}
@@ -137,8 +136,8 @@ export default function MembersScreen() {
                   onPress={() => handleRemoveMember(m)}
                   accessibilityLabel={
                     m.status === 'pending'
-                      ? `Remove invite for ${m.fullName}`
-                      : `Remove ${m.fullName}`
+                      ? `Remove invite for ${displayName(m)}`
+                      : `Remove ${displayName(m)}`
                   }
                 />
               )}

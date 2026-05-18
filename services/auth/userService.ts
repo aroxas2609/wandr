@@ -5,10 +5,18 @@ export async function upsertUserProfile(user: User): Promise<void> {
   const client = getSupabaseClient();
   if (!client) return;
 
+  const existing = await fetchUserProfile(user.id);
+  const fullName =
+    user.fullName.trim() && user.fullName !== 'Traveler'
+      ? user.fullName
+      : existing?.fullName && existing.fullName !== 'Traveler'
+        ? existing.fullName
+        : user.fullName;
+
   const { error } = await client.from('users').upsert({
     id: user.id,
     email: user.email,
-    full_name: user.fullName,
+    full_name: fullName,
     avatar_url: user.avatarUrl,
   });
   if (error) throw error;

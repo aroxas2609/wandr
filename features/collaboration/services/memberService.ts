@@ -1,5 +1,6 @@
 import { getJson, setJson, StorageKeys } from '@/lib/mmkv';
 import { getErrorMessage } from '@/lib/errors';
+import { resolveMemberDisplayName } from '@/lib/memberDisplayName';
 import { getSupabaseClient, requireSupabaseClient } from '@/services/supabase/client';
 import { fetchTrip, fetchTripMembers as fetchTripMembersBase } from '@/features/trips/services/tripService';
 import type { TripMember } from '@/types';
@@ -97,19 +98,25 @@ export async function fetchTripMembersWithOwner(tripId: string): Promise<TripMem
     if (!ownerInList) {
       const client = getSupabaseClient();
       let ownerName = 'You';
+      let ownerEmail: string | undefined;
       if (client) {
         const { data } = await client
           .from('users')
-          .select('full_name')
+          .select('full_name, email')
           .eq('id', trip.ownerId)
           .single();
-        if (data?.full_name) ownerName = data.full_name;
+        ownerEmail = data?.email ?? undefined;
+        ownerName = resolveMemberDisplayName({
+          fullName: data?.full_name,
+          email: ownerEmail,
+        });
       }
       merged.push({
         tripId,
         userId: trip.ownerId,
         role: 'owner',
         fullName: ownerName,
+        email: ownerEmail,
         status: 'active',
       });
     }

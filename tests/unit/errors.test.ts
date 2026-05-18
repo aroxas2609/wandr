@@ -30,7 +30,7 @@ describe('getErrorMessage', () => {
 
   it('maps permissionDeniedError to context message', () => {
     const err = permissionDeniedError('trip-invite');
-    expect(err.code).toBe(PERMISSION_DENIED_CODE);
+    expect((err as Error & { code: string }).code).toBe(PERMISSION_DENIED_CODE);
     expect(getErrorMessage(err, undefined, 'trip-invite')).toBe(
       'Only the trip owner can invite people to this trip.'
     );

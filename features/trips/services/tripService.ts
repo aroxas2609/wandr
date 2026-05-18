@@ -3,6 +3,7 @@ import { mapDbDay, mapDbTrip, mapDayToDb, mapTripToDb } from '@/lib/supabaseMapp
 import { getSupabaseClient, requireSupabaseClient } from '@/services/supabase/client';
 import { uploadTripCover } from '@/services/storage/upload';
 import { permissionDeniedError } from '@/lib/errors';
+import { resolveMemberDisplayName } from '@/lib/memberDisplayName';
 import { generateId } from '@/lib/ids';
 import { generateDayDates } from '@/utils/dates';
 import { getTripStatus } from '@/utils/dates';
@@ -261,18 +262,22 @@ export async function fetchTripMembers(tripId: string): Promise<TripMember[]> {
 
   const { data, error } = await client
     .from('trip_members')
-    .select('trip_id, user_id, role, users(full_name, avatar_url)')
+    .select('trip_id, user_id, role, users(full_name, avatar_url, email)')
     .eq('trip_id', tripId);
   if (error) throw error;
 
   const members: TripMember[] = (data ?? []).map((row) => {
-    const users = row.users as { full_name?: string; avatar_url?: string } | null;
+    const users = row.users as { full_name?: string; avatar_url?: string; email?: string } | null;
     return {
       tripId: row.trip_id,
       userId: row.user_id,
       role: row.role as TripMember['role'],
-      fullName: users?.full_name ?? 'Traveler',
+      fullName: resolveMemberDisplayName({
+        fullName: users?.full_name,
+        email: users?.email,
+      }),
       avatarUrl: users?.avatar_url,
+      email: users?.email,
     };
   });
 

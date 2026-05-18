@@ -35,4 +35,5 @@ export const StorageKeys = {
   onboarding: 'onboarding_complete',
   syncQueue: 'sync_queue',
   seeded: 'data_seeded',
+  pwaInstallBannerDismissed: 'pwa_install_banner_dismissed',
 } as const;

@@ -1,20 +1,39 @@
 import { Tabs } from 'expo-router';
 import { BlurView } from 'expo-blur';
 import { StyleSheet, Platform } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { colors } from '@/theme';
 
+const TAB_BAR_BASE = 56;
+const TAB_BAR_PADDING_TOP = 8;
+
 export default function TabLayout() {
+  const insets = useSafeAreaInsets();
+  const webBottomInset = Platform.OS === 'web' ? insets.bottom : 0;
+  const tabBarHeight =
+    Platform.OS === 'ios'
+      ? 88
+      : TAB_BAR_BASE + TAB_BAR_PADDING_TOP + webBottomInset;
+
+  const useBlurTabBar = Platform.OS === 'ios' || Platform.OS === 'web';
+
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
         tabBarActiveTintColor: colors.gold,
         tabBarInactiveTintColor: colors.muted,
-        tabBarStyle: styles.tabBar,
+        tabBarStyle: {
+          ...styles.tabBar,
+          height: tabBarHeight,
+          paddingTop: TAB_BAR_PADDING_TOP,
+          paddingBottom: Platform.OS === 'web' ? webBottomInset : undefined,
+          backgroundColor: useBlurTabBar ? 'transparent' : colors.elevated,
+        },
         tabBarBackground: () =>
-          Platform.OS === 'ios' ? (
+          useBlurTabBar ? (
             <BlurView intensity={80} tint="dark" style={StyleSheet.absoluteFill} />
           ) : undefined,
         tabBarLabelStyle: styles.tabLabel,
@@ -59,11 +78,8 @@ export default function TabLayout() {
 const styles = StyleSheet.create({
   tabBar: {
     position: 'absolute',
-    backgroundColor: Platform.OS === 'ios' ? 'transparent' : colors.elevated,
     borderTopColor: colors.glassBorder,
     borderTopWidth: 1,
-    height: Platform.OS === 'ios' ? 88 : 64,
-    paddingTop: 8,
   },
   tabLabel: {
     fontFamily: 'Inter_500Medium',

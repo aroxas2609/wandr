@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Pressable, Alert, Platform } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -30,6 +30,7 @@ import { formatDateRange, formatTripDate } from '@/utils/dates';
 import { confirmAction } from '@/lib/confirm';
 import { getErrorMessage } from '@/lib/errors';
 import { navigateBack } from '@/lib/navigation';
+import { showAppMessage } from '@/stores/appMessageStore';
 import { colors, typography, spacing } from '@/theme';
 
 export default function TripDetailScreen() {
@@ -77,11 +78,7 @@ export default function TripDetailScreen() {
           router.replace('/(tabs)/trips');
         } catch (e) {
           const message = getErrorMessage(e, undefined, 'trip-delete');
-          if (Platform.OS === 'web') {
-            globalThis.alert(message);
-          } else {
-            Alert.alert('Cannot delete trip', message);
-          }
+          showAppMessage('Cannot delete trip', message);
         } finally {
           setDeleting(false);
         }
@@ -100,16 +97,16 @@ export default function TripDetailScreen() {
       }
       const day = tripDays[0];
       if (!day) {
-        const message = 'No days found for this trip. Check start and end dates.';
-        if (Platform.OS === 'web') globalThis.alert(message);
-        else Alert.alert('Day planner', message);
+        showAppMessage(
+          'Day planner',
+          'No days found for this trip. Check start and end dates.'
+        );
         return;
       }
       router.push(`/trip/${id}/day/${day.id}`);
     } catch (e) {
       const message = getErrorMessage(e, 'Could not open day planner.');
-      if (Platform.OS === 'web') globalThis.alert(message);
-      else Alert.alert('Day planner', message);
+      showAppMessage('Day planner', message);
     } finally {
       setOpeningPlanner(false);
     }

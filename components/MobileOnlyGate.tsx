@@ -3,6 +3,7 @@ import { Platform } from 'react-native';
 import { useWebGateStatus } from '@/hooks/useIsMobileWeb';
 import { DesktopWebBlock } from './DesktopWebBlock';
 import { TabletLandscapeBlock } from './TabletLandscapeBlock';
+import { AddToHomeScreenBanner } from './AddToHomeScreenBanner';
 
 interface MobileOnlyGateProps {
   children: React.ReactNode;
@@ -25,5 +26,10 @@ export function MobileOnlyGate({ children }: MobileOnlyGateProps) {
     }
   }
 
-  return <>{children}</>;
+  return (
+    <>
+      {children}
+      <AddToHomeScreenBanner />
+    </>
+  );
 }
