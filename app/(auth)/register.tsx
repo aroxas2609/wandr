@@ -7,6 +7,7 @@ import { ScreenHeader, GlassCard, PremiumButton, FormInput } from '@/components'
 import { registerSchema, type RegisterFormData } from '@/features/auth/schemas/authSchema';
 import { signUp, EmailConfirmationRequiredError } from '@/services/auth/authService';
 import { useAuthStore } from '@/stores/authStore';
+import { getPendingInviteToken } from '@/lib/pendingInvite';
 import { colors, typography, spacing } from '@/theme';
 
 export default function RegisterScreen() {
@@ -32,7 +33,12 @@ export default function RegisterScreen() {
       });
       setUser(user);
       setOnboardingComplete(true);
-      router.replace('/(tabs)');
+      const pendingInvite = getPendingInviteToken();
+      router.replace(
+        pendingInvite
+          ? `/trip/join?token=${encodeURIComponent(pendingInvite)}`
+          : '/(tabs)'
+      );
     } catch (e) {
       if (e instanceof EmailConfirmationRequiredError) {
         setSuccess(

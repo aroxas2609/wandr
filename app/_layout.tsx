@@ -60,6 +60,7 @@ export default function RootLayout() {
         <Stack.Screen name="auth/callback" />
         <Stack.Screen name="(auth)" />
         <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="trip/join" />
         <Stack.Screen name="trip/new" options={{ presentation: 'modal' }} />
         <Stack.Screen name="trip/[id]/edit" options={{ presentation: 'modal' }} />
         <Stack.Screen name="trip/[id]/activity/new" options={{ presentation: 'modal' }} />

@@ -7,6 +7,7 @@ import { ScreenHeader, GlassCard, PremiumButton, FormInput } from '@/components'
 import { loginSchema, type LoginFormData } from '@/features/auth/schemas/authSchema';
 import { signIn } from '@/services/auth/authService';
 import { useAuthStore } from '@/stores/authStore';
+import { getPendingInviteToken } from '@/lib/pendingInvite';
 import { TestIds } from '@/constants/testIds';
 import { colors, typography, spacing } from '@/theme';
 
@@ -28,7 +29,12 @@ export default function LoginScreen() {
       const user = await signIn(data);
       setUser(user);
       setOnboardingComplete(true);
-      router.replace('/(tabs)');
+      const pendingInvite = getPendingInviteToken();
+      router.replace(
+        pendingInvite
+          ? `/trip/join?token=${encodeURIComponent(pendingInvite)}`
+          : '/(tabs)'
+      );
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Login failed');
     } finally {

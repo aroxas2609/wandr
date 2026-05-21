@@ -247,43 +247,37 @@ export async function lookupTripInvite(
   };
 }
 
-export async function joinTripByInviteToken(
-  tripId: string,
-  userId: string,
-  token: string
-): Promise<boolean> {
+/** Add the signed-in user to a trip using a pending invite code (server-side, bypasses member RLS). */
+export async function joinTripByToken(_userId: string, token: string): Promise<string> {
   const client = requireSupabaseClient();
+  const normalized = token.trim().toUpperCase();
 
-  const { data: pending } = await client
-    .from('trip_invites')
-    .select('*')
-    .eq('trip_id', tripId)
-    .eq('invite_token', token.toUpperCase())
-    .maybeSingle();
-
-  const { error } = await client.from('trip_members').upsert({
-    trip_id: tripId,
-    user_id: userId,
-    role: pending?.role ?? 'viewer',
-    invite_token: null,
+  const { data, error } = await client.rpc('join_trip_by_invite', {
+    invite_code: normalized,
   });
-  if (error) throw error;
 
-  if (pending) {
-    await client.from('trip_invites').delete().eq('id', pending.id);
+  if (error) {
+    const msg = error.message ?? '';
+    if (
+      msg.includes('join_trip_by_invite') ||
+      error.code === 'PGRST202' ||
+      error.code === '42883'
+    ) {
+      throw new Error(
+        'Run supabase/join_trip_by_invite.sql in your Supabase SQL editor, then try again.'
+      );
+    }
+    if (msg.includes('Invalid or expired invite')) {
+      throw new Error('Invalid or expired invite code.');
+    }
+    throw new Error(getErrorMessage(error, 'Could not join trip.'));
   }
 
-  return true;
-}
-
-/** Resolve invite code and add the signed-in user to the trip. */
-export async function joinTripByToken(userId: string, token: string): Promise<string> {
-  const lookup = await lookupTripInvite(token);
-  if (!lookup) {
+  const tripId = typeof data === 'string' ? data : (data as string | null);
+  if (!tripId) {
     throw new Error('Invalid or expired invite code.');
   }
-  await joinTripByInviteToken(lookup.tripId, userId, token);
-  return lookup.tripId;
+  return tripId;
 }
 
 function clearLocalPendingInvite(

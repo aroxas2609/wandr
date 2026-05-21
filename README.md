@@ -60,8 +60,11 @@ Run in order in the Supabase SQL editor:
 7. `supabase/role_policies.sql` (editor vs viewer permissions)
 8. `supabase/trip_archive.sql` (archive trips)
 9. `supabase/avatars_storage.sql` (profile photos)
-10. `supabase/invite_lookup.sql` (deep-link trip invites)
-11. `supabase/expense_splits.sql` (split expenses among travelers)
+10. `supabase/trip_invites.sql` (pending email invites)
+11. `supabase/invite_lookup.sql` (resolve invite codes)
+12. `supabase/join_trip_by_invite.sql` (**required** for invite links — lets guests join via code)
+13. `supabase/expense_splits.sql` (split expenses among travelers)
+14. `supabase/users_co_traveler_policy.sql` (traveler names/avatars on shared trips)
 
 Invite links use `wandr://trip/join?token=CODE` (or your web URL with the same path).
 
