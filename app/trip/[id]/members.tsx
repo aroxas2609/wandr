@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, Pressable, Share, RefreshControl } from 'react-native';
+import { usePullToRefreshFeedback } from '@/hooks/usePullToRefreshFeedback';
 import { useLocalSearchParams } from 'expo-router';
 import { buildTripJoinUrl } from '@/lib/tripInviteLink';
 import {
@@ -19,6 +20,7 @@ import { inviteMemberByEmail, removeMember } from '@/features/collaboration/serv
 import { useAuthStore } from '@/stores/authStore';
 import { confirmAction } from '@/lib/confirm';
 import { getErrorMessage } from '@/lib/errors';
+import { resolveMemberAvatar } from '@/lib/memberAvatar';
 import { showAppMessage } from '@/stores/appMessageStore';
 import { colors, typography, spacing } from '@/theme';
 
@@ -32,23 +34,26 @@ export default function MembersScreen() {
   const user = useAuthStore((s) => s.user);
   const { data: trip, refetch: refetchTrip } = useTrip(id);
   const { data: members = [], refetch: refetchMembers, isRefetching } = useTripMembers(id);
-  const [refreshing, setRefreshing] = useState(false);
   const [email, setEmail] = useState('');
   const [feedback, setFeedback] = useState<InviteFeedback | null>(null);
   const [loading, setLoading] = useState(false);
   const [inviteRole, setInviteRole] = useState<'editor' | 'viewer'>('editor');
   const [profileMember, setProfileMember] = useState<TripMember | null>(null);
+  const {
+    refreshing,
+    setRefreshing,
+    setRefreshHint,
+    markSuccess,
+    statusText: refreshStatusText,
+    isBusy: isRefreshBusy,
+  } = usePullToRefreshFeedback(isRefetching);
 
   const isOwner = trip?.ownerId === user?.id;
   const displayName = (m: (typeof members)[number]) =>
     user?.id === m.userId && user.fullName && user.fullName !== 'Traveler'
       ? user.fullName
       : m.fullName;
-  const avatarForMember = (m: (typeof members)[number]) => {
-    if (m.status === 'pending') return undefined;
-    if (m.userId === user?.id && user.avatarUrl) return user.avatarUrl;
-    return m.avatarUrl;
-  };
+  const avatarForMember = (m: (typeof members)[number]) => resolveMemberAvatar(m, user);
 
   const stackMembers = members.map((m) => ({
     key: m.userId,
@@ -66,8 +71,16 @@ export default function MembersScreen() {
 
   const onRefresh = async () => {
     setRefreshing(true);
-    await Promise.all([refetchTrip(), refetchMembers()]);
-    setRefreshing(false);
+    setRefreshHint(null);
+    try {
+      await Promise.all([refetchTrip(), refetchMembers()]);
+      markSuccess();
+    } catch (e) {
+      const message = getErrorMessage(e, 'Could not refresh travelers.');
+      showAppMessage('Refresh failed', message);
+    } finally {
+      setRefreshing(false);
+    }
   };
 
   const shareInviteForToken = async (token: string, inviteeEmail?: string) => {
@@ -155,7 +168,7 @@ export default function MembersScreen() {
         contentContainerStyle={styles.content}
         refreshControl={
           <RefreshControl
-            refreshing={refreshing || isRefetching}
+            refreshing={isRefreshBusy}
             onRefresh={onRefresh}
             tintColor={colors.gold}
             colors={[colors.gold]}
@@ -163,7 +176,14 @@ export default function MembersScreen() {
         }
       >
         <GlassCard style={styles.card}>
-          <Text style={styles.label}>TRAVELERS</Text>
+          <View style={styles.travelersHeader}>
+            <Text style={styles.label}>TRAVELERS</Text>
+            {refreshStatusText ? (
+              <Text style={styles.refreshStatus} accessibilityLiveRegion="polite">
+                {refreshStatusText}
+              </Text>
+            ) : null}
+          </View>
           <AvatarStack
             members={stackMembers}
             onMemberPress={(stackItem) => {
@@ -335,7 +355,15 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   content: { padding: spacing.xl },
   card: { marginBottom: spacing.lg },
-  label: { ...typography.overline, marginBottom: spacing.md },
+  travelersHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.sm,
+    marginBottom: spacing.md,
+  },
+  label: { ...typography.overline, marginBottom: 0 },
+  refreshStatus: { ...typography.caption, color: colors.gold },
   memberRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',

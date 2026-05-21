@@ -99,13 +99,15 @@ export async function fetchTripMembersWithOwner(tripId: string): Promise<TripMem
       const client = getSupabaseClient();
       let ownerName = 'You';
       let ownerEmail: string | undefined;
+      let ownerAvatarUrl: string | undefined;
       if (client) {
         const { data } = await client
           .from('users')
-          .select('full_name, email')
+          .select('full_name, email, avatar_url')
           .eq('id', trip.ownerId)
           .single();
         ownerEmail = data?.email ?? undefined;
+        ownerAvatarUrl = data?.avatar_url ?? undefined;
         ownerName = resolveMemberDisplayName({
           fullName: data?.full_name,
           email: ownerEmail,
@@ -117,6 +119,7 @@ export async function fetchTripMembersWithOwner(tripId: string): Promise<TripMem
         role: 'owner',
         fullName: ownerName,
         email: ownerEmail,
+        avatarUrl: ownerAvatarUrl,
         status: 'active',
       });
     }

@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Pressable, RefreshControl } from 'react-native';
+import { usePullToRefreshFeedback } from '@/hooks/usePullToRefreshFeedback';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -40,6 +41,7 @@ import { formatDateRange, formatTripDate } from '@/utils/dates';
 import { confirmAction } from '@/lib/confirm';
 import { getErrorMessage } from '@/lib/errors';
 import { resolveMemberDisplayName } from '@/lib/memberDisplayName';
+import { resolveMemberAvatar } from '@/lib/memberAvatar';
 import { navigateBack } from '@/lib/navigation';
 import { showAppMessage } from '@/stores/appMessageStore';
 import { useAuthStore } from '@/stores/authStore';
@@ -48,12 +50,37 @@ import { colors, typography, spacing } from '@/theme';
 export default function TripDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const insets = useSafeAreaInsets();
-  const { data: trip, isLoading } = useTrip(id);
-  const { data: days = [], isLoading: daysLoading } = useTripDays(id);
+  const { data: trip, isLoading, refetch: refetchTrip, isRefetching: tripRefetching } = useTrip(id);
+  const {
+    data: days = [],
+    isLoading: daysLoading,
+    refetch: refetchDays,
+    isRefetching: daysRefetching,
+  } = useTripDays(id);
   const queryClient = useQueryClient();
-  const { data: members = [] } = useTripMembers(id);
-  const { data: activities = [] } = useTripActivities(days, id);
-  const { data: expenses = [] } = useExpenses(id);
+  const { data: members = [], refetch: refetchMembers, isRefetching: membersRefetching } =
+    useTripMembers(id);
+  const {
+    data: activities = [],
+    refetch: refetchActivities,
+    isRefetching: activitiesRefetching,
+  } = useTripActivities(days, id);
+  const { data: expenses = [], refetch: refetchExpenses, isRefetching: expensesRefetching } =
+    useExpenses(id);
+  const isQueryRefetching =
+    tripRefetching ||
+    daysRefetching ||
+    membersRefetching ||
+    activitiesRefetching ||
+    expensesRefetching;
+  const {
+    refreshing,
+    setRefreshing,
+    setRefreshHint,
+    markSuccess,
+    statusText: refreshStatusText,
+    isBusy: isRefreshBusy,
+  } = usePullToRefreshFeedback(isQueryRefetching);
   const deleteTrip = useDeleteTrip();
   const archiveTrip = useArchiveTrip();
   const { isOwner, isViewer } = useTripAccess(id);
@@ -95,12 +122,7 @@ export default function TripDetailScreen() {
   const travelerAvatars = members.map((m) => ({
     key: m.userId,
     name: resolveMemberDisplayName({ fullName: m.fullName, email: m.email }),
-    avatarUrl:
-      m.status === 'pending'
-        ? undefined
-        : m.userId === user?.id && user?.avatarUrl
-          ? user.avatarUrl
-          : m.avatarUrl,
+    avatarUrl: resolveMemberAvatar(m, user),
   }));
 
   const handleArchive = () => {
@@ -139,6 +161,25 @@ export default function TripDetailScreen() {
     });
   };
 
+  const onRefresh = async () => {
+    setRefreshing(true);
+    setRefreshHint(null);
+    try {
+      await Promise.all([
+        refetchTrip(),
+        refetchDays(),
+        refetchMembers(),
+        refetchExpenses(),
+        days.length > 0 ? refetchActivities() : Promise.resolve(),
+      ]);
+      markSuccess();
+    } catch (e) {
+      showAppMessage('Refresh failed', getErrorMessage(e, 'Could not refresh trip.'));
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
   const handleOpenDayPlanner = async () => {
     if (!trip) return;
     setOpeningPlanner(true);
@@ -167,7 +208,17 @@ export default function TripDetailScreen() {
 
   return (
     <View style={styles.container}>
-      <ScrollView showsVerticalScrollIndicator={false}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={isRefreshBusy}
+            onRefresh={onRefresh}
+            tintColor={colors.gold}
+            colors={[colors.gold]}
+          />
+        }
+      >
         <HeroSection
           title={trip.title}
           subtitle={trip.destination}
@@ -178,6 +229,11 @@ export default function TripDetailScreen() {
           backHref="/(tabs)/trips"
         />
         <View style={[styles.content, { paddingBottom: insets.bottom + 32 }]}>
+          {refreshStatusText ? (
+            <Text style={styles.refreshStatus} accessibilityLiveRegion="polite">
+              {refreshStatusText}
+            </Text>
+          ) : null}
           {isViewer ? <ViewOnlyBanner /> : null}
           {isOwner ? (
             <View style={styles.actions}>
@@ -299,6 +355,12 @@ const styles = StyleSheet.create({
   },
   loadingText: { ...typography.body },
   content: { paddingHorizontal: spacing.xl, marginTop: -24 },
+  refreshStatus: {
+    ...typography.caption,
+    color: colors.gold,
+    textAlign: 'right',
+    marginBottom: spacing.sm,
+  },
   actions: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
