@@ -56,6 +56,7 @@ Run in order in the Supabase SQL editor:
 3. `supabase/policies.sql`
 4. `supabase/storage.sql`
 5. `supabase/auth_trigger.sql` (creates `public.users` on signup)
+6. `supabase/realtime_publication.sql` (live updates when collaborators edit a shared trip)
 
 ## Scripts
 
