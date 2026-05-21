@@ -36,4 +36,5 @@ export const StorageKeys = {
   syncQueue: 'sync_queue',
   seeded: 'data_seeded',
   pwaInstallBannerDismissed: 'pwa_install_banner_dismissed',
+  pendingInviteToken: 'pending_invite_token',
 } as const;

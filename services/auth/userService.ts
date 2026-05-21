@@ -38,6 +38,38 @@ export async function fetchUserProfile(userId: string): Promise<User | null> {
   };
 }
 
+export async function updateUserProfile(
+  userId: string,
+  updates: { fullName: string; avatarUrl?: string }
+): Promise<User> {
+  const client = getSupabaseClient();
+  if (!client) {
+    throw new Error('Sign in to update your profile.');
+  }
+
+  const trimmed = updates.fullName.trim();
+  const fullName = trimmed.length > 0 ? trimmed : 'Traveler';
+
+  const { data, error } = await client
+    .from('users')
+    .update({
+      full_name: fullName,
+      ...(updates.avatarUrl !== undefined ? { avatar_url: updates.avatarUrl } : {}),
+    })
+    .eq('id', userId)
+    .select('*')
+    .single();
+  if (error) throw error;
+
+  return {
+    id: data.id,
+    email: data.email,
+    fullName: data.full_name ?? 'Traveler',
+    avatarUrl: data.avatar_url ?? undefined,
+    createdAt: data.created_at,
+  };
+}
+
 export async function updateNotificationPrefs(
   userId: string,
   prefs: { pushNotifications: boolean; tripUpdates: boolean }

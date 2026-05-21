@@ -225,6 +225,28 @@ export async function inviteMemberByEmail(
   return { inviteToken, addedToTrip: false };
 }
 
+export async function lookupTripInvite(
+  token: string
+): Promise<{ tripId: string; role: 'editor' | 'viewer' } | null> {
+  const client = requireSupabaseClient();
+  const normalized = token.trim().toUpperCase();
+
+  const { data, error } = await client.rpc('lookup_trip_invite', {
+    invite_code: normalized,
+  });
+  if (error) {
+    if (__DEV__) console.warn('[Wandr] lookup_trip_invite:', error.message);
+    return null;
+  }
+
+  const row = Array.isArray(data) ? data[0] : data;
+  if (!row?.trip_id) return null;
+  return {
+    tripId: row.trip_id as string,
+    role: (row.role as 'editor' | 'viewer') ?? 'viewer',
+  };
+}
+
 export async function joinTripByInviteToken(
   tripId: string,
   userId: string,
@@ -252,6 +274,16 @@ export async function joinTripByInviteToken(
   }
 
   return true;
+}
+
+/** Resolve invite code and add the signed-in user to the trip. */
+export async function joinTripByToken(userId: string, token: string): Promise<string> {
+  const lookup = await lookupTripInvite(token);
+  if (!lookup) {
+    throw new Error('Invalid or expired invite code.');
+  }
+  await joinTripByInviteToken(lookup.tripId, userId, token);
+  return lookup.tripId;
 }
 
 function clearLocalPendingInvite(

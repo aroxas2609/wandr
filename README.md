@@ -57,6 +57,13 @@ Run in order in the Supabase SQL editor:
 4. `supabase/storage.sql`
 5. `supabase/auth_trigger.sql` (creates `public.users` on signup)
 6. `supabase/realtime_publication.sql` (live updates when collaborators edit a shared trip)
+7. `supabase/role_policies.sql` (editor vs viewer permissions)
+8. `supabase/trip_archive.sql` (archive trips)
+9. `supabase/avatars_storage.sql` (profile photos)
+10. `supabase/invite_lookup.sql` (deep-link trip invites)
+11. `supabase/expense_splits.sql` (split expenses among travelers)
+
+Invite links use `wandr://trip/join?token=CODE` (or your web URL with the same path).
 
 ## Scripts
 

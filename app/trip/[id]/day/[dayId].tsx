@@ -3,7 +3,8 @@ import { View, Text, StyleSheet, ScrollView, Platform, Dimensions } from 'react-
 import { router, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useQueryClient } from '@tanstack/react-query';
-import { ScreenHeader, TimelineView, TagChip } from '@/components';
+import { ScreenHeader, TimelineView, TagChip, ViewOnlyBanner } from '@/components';
+import { useTripAccess } from '@/hooks/useTripAccess';
 import { useTrip, useTripDays, tripKeys } from '@/features/trips/hooks/useTrips';
 import { ensureTripDays } from '@/features/trips/services/tripService';
 import { getErrorMessage } from '@/lib/errors';
@@ -26,6 +27,7 @@ export default function DayPlannerScreen() {
   const { data: trip } = useTrip(id);
   const { data: days = [], isLoading: daysLoading } = useTripDays(id);
   const { data: activities = [], isLoading } = useDayActivities(dayId);
+  const { canEdit, isViewer } = useTripAccess(id);
   const reorder = useReorderActivity(dayId, id);
   const [daysError, setDaysError] = useState('');
   const dayTabsRef = useRef<ScrollView>(null);
@@ -132,6 +134,7 @@ export default function DayPlannerScreen() {
         </View>
       )}
 
+      {isViewer ? <ViewOnlyBanner /> : null}
       {daysError ? <Text style={styles.error}>{daysError}</Text> : null}
 
       {daysLoading || (days.length === 0 && !daysError) ? (
@@ -143,9 +146,10 @@ export default function DayPlannerScreen() {
           <TimelineView
             activities={activities}
             onActivityPress={handleActivityPress}
-            onAddActivity={handleAddActivity}
-            onMoveUp={(actId) => reorder.mutate({ id: actId, direction: 'up' })}
-            onMoveDown={(actId) => reorder.mutate({ id: actId, direction: 'down' })}
+            onAddActivity={canEdit ? handleAddActivity : undefined}
+            onMoveUp={canEdit ? (actId) => reorder.mutate({ id: actId, direction: 'up' }) : undefined}
+            onMoveDown={canEdit ? (actId) => reorder.mutate({ id: actId, direction: 'down' }) : undefined}
+            readOnly={!canEdit}
           />
         </ScrollView>
       )}

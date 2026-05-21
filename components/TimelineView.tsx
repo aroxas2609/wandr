@@ -9,9 +9,10 @@ import { TestIds } from '@/constants/testIds';
 interface TimelineViewProps {
   activities: Activity[];
   onActivityPress: (activity: Activity) => void;
-  onAddActivity: (slot: TimeSlot) => void;
+  onAddActivity?: (slot: TimeSlot) => void;
   onMoveUp?: (id: string) => void;
   onMoveDown?: (id: string) => void;
+  readOnly?: boolean;
 }
 
 export function TimelineView({
@@ -20,6 +21,7 @@ export function TimelineView({
   onAddActivity,
   onMoveUp,
   onMoveDown,
+  readOnly = false,
 }: TimelineViewProps) {
   const grouped = groupActivitiesBySlot(activities);
 
@@ -38,19 +40,21 @@ export function TimelineView({
                 key={activity.id}
                 activity={activity}
                 onPress={() => onActivityPress(activity)}
-                showReorder
-                onMoveUp={() => onMoveUp?.(activity.id)}
-                onMoveDown={() => onMoveDown?.(activity.id)}
+                showReorder={!readOnly && !!onMoveUp}
+                onMoveUp={onMoveUp ? () => onMoveUp(activity.id) : undefined}
+                onMoveDown={onMoveDown ? () => onMoveDown(activity.id) : undefined}
               />
             ))}
-            <PremiumButton
-              label={`Add to ${TIME_SLOT_LABELS[slot]}`}
-              variant="outline"
-              onPress={() => onAddActivity(slot)}
-              testID={TestIds.addActivityButton}
-              fullWidth={false}
-              style={styles.addButton}
-            />
+            {!readOnly && onAddActivity ? (
+              <PremiumButton
+                label={`Add to ${TIME_SLOT_LABELS[slot]}`}
+                variant="outline"
+                onPress={() => onAddActivity(slot)}
+                testID={TestIds.addActivityButton}
+                fullWidth={false}
+                style={styles.addButton}
+              />
+            ) : null}
           </View>
         </View>
       ))}

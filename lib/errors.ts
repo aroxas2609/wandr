@@ -6,6 +6,8 @@ export type ErrorContext =
   | 'trip-delete'
   | 'trip-invite'
   | 'trip-members'
+  | 'trip-viewer-readonly'
+  | 'trip-editor-required'
   | 'generic';
 
 const PERMISSION_MESSAGES: Record<ErrorContext, string> = {
@@ -14,6 +16,8 @@ const PERMISSION_MESSAGES: Record<ErrorContext, string> = {
   'trip-delete': 'Only the trip owner can delete this trip.',
   'trip-invite': 'Only the trip owner can invite people to this trip.',
   'trip-members': 'Only the trip owner can remove travelers from this trip.',
+  'trip-viewer-readonly': 'You have view-only access on this trip.',
+  'trip-editor-required': 'Only editors and the trip owner can make changes.',
   generic: 'You do not have permission to do that.',
 };
 
@@ -22,6 +26,8 @@ const CONTEXT_FALLBACKS: Record<ErrorContext, string> = {
   'trip-delete': 'Could not delete this trip. Check your connection and try again.',
   'trip-invite': 'Could not send the invite. Check your connection and try again.',
   'trip-members': 'Could not update travelers. Check your connection and try again.',
+  'trip-viewer-readonly': 'This action is not available for viewers.',
+  'trip-editor-required': 'You need editor access to do that.',
   generic: 'Something went wrong. Please try again.',
 };
 

@@ -20,3 +20,4 @@ export { BudgetProgressBar } from './BudgetProgressBar';
 export { TripToolsGrid } from './TripToolsGrid';
 export { DeleteIconButton } from './DeleteIconButton';
 export type { DeleteIconButtonProps, DeleteIconButtonSize } from './DeleteIconButton';
+export { ViewOnlyBanner } from './ViewOnlyBanner';

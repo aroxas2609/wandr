@@ -5,6 +5,8 @@ import {
   createTrip,
   updateTrip,
   deleteTrip,
+  archiveTrip,
+  unarchiveTrip,
   fetchTripDays,
 } from '../services/tripService';
 import { fetchTripMembers } from '@/features/collaboration/services/memberService';
@@ -100,6 +102,28 @@ export function useDeleteTrip() {
     mutationFn: deleteTrip,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: tripKeys.all });
+    },
+  });
+}
+
+export function useArchiveTrip() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: archiveTrip,
+    onSuccess: (_data, id) => {
+      queryClient.invalidateQueries({ queryKey: tripKeys.all });
+      queryClient.invalidateQueries({ queryKey: tripKeys.detail(id) });
+    },
+  });
+}
+
+export function useUnarchiveTrip() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: unarchiveTrip,
+    onSuccess: (_data, id) => {
+      queryClient.invalidateQueries({ queryKey: tripKeys.all });
+      queryClient.invalidateQueries({ queryKey: tripKeys.detail(id) });
     },
   });
 }

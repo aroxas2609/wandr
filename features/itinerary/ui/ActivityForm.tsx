@@ -13,6 +13,7 @@ interface ActivityFormProps {
   onSubmit: (data: ActivityFormData) => void;
   loading?: boolean;
   submitLabel?: string;
+  readOnly?: boolean;
   /** Centers map search and pin picker near the trip destination. */
   tripDestination?: string;
 }
@@ -22,6 +23,7 @@ export function ActivityForm({
   onSubmit,
   loading,
   submitLabel = 'Save Activity',
+  readOnly = false,
   tripDestination,
 }: ActivityFormProps) {
   const { control, handleSubmit, watch, setValue, register, trigger, formState: { errors } } =
@@ -58,7 +60,7 @@ export function ActivityForm({
         control={control}
         name="title"
         render={({ field: { onChange, onBlur, value } }) => (
-          <FormInput label="Activity Title" value={value} onChangeText={onChange} onBlur={onBlur} placeholder="Visit the Louvre" error={errors.title?.message} />
+          <FormInput label="Activity Title" value={value} onChangeText={onChange} onBlur={onBlur} placeholder="Visit the Louvre" error={errors.title?.message} editable={!readOnly} />
         )}
       />
       <View style={styles.chips}>
@@ -121,17 +123,19 @@ export function ActivityForm({
         control={control}
         name="notes"
         render={({ field: { onChange, onBlur, value } }) => (
-          <FormInput label="Notes" value={value ?? ''} onChangeText={onChange} onBlur={onBlur} placeholder="Reservation details..." multiline />
+          <FormInput label="Notes" value={value ?? ''} onChangeText={onChange} onBlur={onBlur} placeholder="Reservation details..." multiline editable={!readOnly} />
         )}
       />
       <Controller
         control={control}
         name="bookingUrl"
         render={({ field: { onChange, onBlur, value } }) => (
-          <FormInput label="Booking URL" value={value ?? ''} onChangeText={onChange} onBlur={onBlur} placeholder="https://..." error={errors.bookingUrl?.message} />
+          <FormInput label="Booking URL" value={value ?? ''} onChangeText={onChange} onBlur={onBlur} placeholder="https://..." error={errors.bookingUrl?.message} editable={!readOnly} />
         )}
       />
-      <PremiumButton label={submitLabel} onPress={handleSubmit(onSubmit)} loading={loading} />
+      {!readOnly && submitLabel ? (
+        <PremiumButton label={submitLabel} onPress={handleSubmit(onSubmit)} loading={loading} />
+      ) : null}
     </ScrollView>
   );
 }

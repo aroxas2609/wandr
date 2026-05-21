@@ -12,6 +12,12 @@ import { restoreSupabaseSession, hasSupabaseSession } from '@/services/auth/sess
 import { tripKeys } from '@/features/trips/hooks/useTrips';
 import { getJson, StorageKeys } from '@/lib/mmkv';
 import { clearUserTripCache } from '@/lib/userDataCache';
+import {
+  getPendingInviteToken,
+  clearPendingInviteToken,
+} from '@/lib/pendingInvite';
+import { joinTripByToken } from '@/features/collaboration/services/memberService';
+import { router } from 'expo-router';
 import type { User } from '@/types';
 import { useEffect } from 'react';
 
@@ -28,6 +34,25 @@ export function AppProviders({ children }: AppProvidersProps) {
   const hydrate = useAuthStore((s) => s.hydrate);
   const setSessionReady = useAuthStore((s) => s.setSessionReady);
   const signOut = useAuthStore((s) => s.signOut);
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const sessionReady = useAuthStore((s) => s.sessionReady);
+  const userId = useAuthStore((s) => s.user?.id);
+
+  useEffect(() => {
+    if (!sessionReady || !isAuthenticated || !userId) return;
+    const pending = getPendingInviteToken();
+    if (!pending) return;
+
+    void (async () => {
+      try {
+        const tripId = await joinTripByToken(userId, pending);
+        clearPendingInviteToken();
+        router.replace(`/trip/${tripId}`);
+      } catch {
+        router.replace(`/trip/join?token=${encodeURIComponent(pending)}`);
+      }
+    })();
+  }, [sessionReady, isAuthenticated, userId]);
 
   useEffect(() => {
     void (async () => {

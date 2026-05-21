@@ -1,6 +1,7 @@
 import { View, StyleSheet } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
-import { ScreenHeader, DeleteIconButton } from '@/components';
+import { ScreenHeader, DeleteIconButton, ViewOnlyBanner } from '@/components';
+import { useTripAccess } from '@/hooks/useTripAccess';
 import { confirmDelete } from '@/lib/confirm';
 import { ActivityForm } from '@/features/itinerary/ui/ActivityForm';
 import {
@@ -21,6 +22,7 @@ export default function ActivityDetailScreen() {
   }>();
   const { data: trip } = useTrip(id);
   const { data: activity, isLoading } = useActivity(activityId);
+  const { canEdit, isViewer } = useTripAccess(id);
   const updateActivity = useUpdateActivity(activityId, dayId);
   const deleteActivity = useDeleteActivity(dayId);
 
@@ -41,6 +43,7 @@ export default function ActivityDetailScreen() {
     <View style={styles.container}>
       <ScreenHeader title="Edit Activity" showBack />
       <View style={styles.form}>
+        {isViewer ? <ViewOnlyBanner /> : null}
         <ActivityForm
           defaultValues={{
             title: activity.title,
@@ -54,19 +57,22 @@ export default function ActivityDetailScreen() {
             bookingUrl: activity.bookingUrl ?? '',
           }}
           tripDestination={trip?.destination}
-          onSubmit={onSubmit}
+          onSubmit={canEdit ? onSubmit : async () => {}}
           loading={updateActivity.isPending}
-          submitLabel="Save Changes"
+          submitLabel={canEdit ? 'Save Changes' : undefined}
+          readOnly={!canEdit}
         />
-        <DeleteIconButton
-          size="md"
-          onPress={confirmDelete('Delete activity?', 'Remove this from your itinerary?', async () => {
-            await deleteActivity.mutateAsync(activityId);
-            router.back();
-          })}
-          accessibilityLabel="Delete activity"
-          style={styles.deleteButton}
-        />
+        {canEdit ? (
+          <DeleteIconButton
+            size="md"
+            onPress={confirmDelete('Delete activity?', 'Remove this from your itinerary?', async () => {
+              await deleteActivity.mutateAsync(activityId);
+              router.back();
+            })}
+            accessibilityLabel="Delete activity"
+            style={styles.deleteButton}
+          />
+        ) : null}
       </View>
     </View>
   );

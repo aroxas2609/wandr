@@ -11,15 +11,24 @@ import {
   AvatarStack,
   TripToolsGrid,
   DeleteIconButton,
+  ViewOnlyBanner,
 } from '@/components';
+import { useTripAccess } from '@/hooks/useTripAccess';
 import { isFeatureEnabled } from '@/constants/features';
-import { calculateTotalExpenses } from '@/utils/budget';
+import {
+  calculateTotalExpenses,
+  totalsByCurrency,
+  formatTotalsLine,
+  hasSingleCurrency,
+  formatMoney,
+} from '@/utils/budget';
 import { useExpenses } from '@/features/budget/hooks/useExpenses';
 import {
   useTrip,
   useTripDays,
   useTripMembers,
   useDeleteTrip,
+  useArchiveTrip,
   tripKeys,
 } from '@/features/trips/hooks/useTrips';
 import { ensureTripDays } from '@/features/trips/services/tripService';
@@ -29,6 +38,7 @@ import { getNextActivities } from '@/utils/itinerary';
 import { formatDateRange, formatTripDate } from '@/utils/dates';
 import { confirmAction } from '@/lib/confirm';
 import { getErrorMessage } from '@/lib/errors';
+import { resolveMemberDisplayName } from '@/lib/memberDisplayName';
 import { navigateBack } from '@/lib/navigation';
 import { showAppMessage } from '@/stores/appMessageStore';
 import { colors, typography, spacing } from '@/theme';
@@ -43,9 +53,23 @@ export default function TripDetailScreen() {
   const { data: activities = [] } = useTripActivities(days, id);
   const { data: expenses = [] } = useExpenses(id);
   const deleteTrip = useDeleteTrip();
+  const archiveTrip = useArchiveTrip();
+  const { isOwner, isViewer } = useTripAccess(id);
   const [deleting, setDeleting] = useState(false);
+  const [archiving, setArchiving] = useState(false);
   const [openingPlanner, setOpeningPlanner] = useState(false);
-  const spent = calculateTotalExpenses(expenses);
+  const currencyTotals = totalsByCurrency(expenses);
+  const singleCurrency = hasSingleCurrency(expenses);
+  const primaryCurrency = Object.keys(currencyTotals)[0] ?? 'USD';
+  const spent = singleCurrency
+    ? calculateTotalExpenses(expenses, primaryCurrency)
+    : 0;
+  const spentLabel =
+    expenses.length === 0
+      ? ''
+      : singleCurrency
+        ? formatMoney(spent, primaryCurrency)
+        : formatTotalsLine(currencyTotals);
 
   if (isLoading || !trip) {
     return (
@@ -65,7 +89,26 @@ export default function TripDetailScreen() {
   }
 
   const previewActivities = getNextActivities(activities, 3);
-  const memberNames = members.map((m) => m.fullName);
+  const memberNames = members.map((m) =>
+    resolveMemberDisplayName({ fullName: m.fullName, email: m.email })
+  );
+
+  const handleArchive = () => {
+    confirmAction('Archive Trip', 'Hide this trip from your main list. You can find it under Archived.', {
+      confirmLabel: 'Archive',
+      onConfirm: async () => {
+        setArchiving(true);
+        try {
+          await archiveTrip.mutateAsync(id);
+          router.replace('/(tabs)/trips');
+        } catch (e) {
+          showAppMessage('Cannot archive trip', getErrorMessage(e, undefined, 'trip-save'));
+        } finally {
+          setArchiving(false);
+        }
+      },
+    });
+  };
 
   const handleDelete = () => {
     confirmAction('Delete Trip', 'This cannot be undone.', {
@@ -125,23 +168,36 @@ export default function TripDetailScreen() {
           backHref="/(tabs)/trips"
         />
         <View style={[styles.content, { paddingBottom: insets.bottom + 32 }]}>
-          <View style={styles.actions}>
-            <Pressable onPress={() => router.push(`/trip/${id}/edit`)} style={styles.iconButton}>
-              <Ionicons name="create-outline" size={22} color={colors.primary} />
-            </Pressable>
-            <DeleteIconButton
-              size="sm"
-              onPress={handleDelete}
-              disabled={deleting}
-              accessibilityLabel="Delete trip"
-              style={[styles.iconButton, deleting && styles.iconButtonDisabled]}
-            />
-          </View>
+          {isViewer ? <ViewOnlyBanner /> : null}
+          {isOwner ? (
+            <View style={styles.actions}>
+              {trip.status !== 'archived' ? (
+                <Pressable
+                  onPress={handleArchive}
+                  style={styles.iconButton}
+                  disabled={archiving}
+                  accessibilityLabel="Archive trip"
+                >
+                  <Ionicons name="archive-outline" size={22} color={colors.primary} />
+                </Pressable>
+              ) : null}
+              <Pressable onPress={() => router.push(`/trip/${id}/edit`)} style={styles.iconButton}>
+                <Ionicons name="create-outline" size={22} color={colors.primary} />
+              </Pressable>
+              <DeleteIconButton
+                size="sm"
+                onPress={handleDelete}
+                disabled={deleting}
+                accessibilityLabel="Delete trip"
+                style={[styles.iconButton, deleting && styles.iconButtonDisabled]}
+              />
+            </View>
+          ) : null}
 
           <GlassCard style={styles.summaryCard}>
             <Text style={styles.summaryLabel}>DATES</Text>
             <Text style={styles.summaryValue}>{formatDateRange(trip.startDate, trip.endDate)}</Text>
-            {trip.budgetTarget != null && trip.budgetTarget > 0 && (
+            {(trip.budgetTarget != null && trip.budgetTarget > 0) || expenses.length > 0 ? (
               <Pressable
                 style={styles.summarySpaced}
                 onPress={() =>
@@ -151,16 +207,27 @@ export default function TripDetailScreen() {
               >
                 <Text style={styles.summaryLabel}>BUDGET</Text>
                 <Text style={styles.summaryValue}>
-                  ${spent.toLocaleString()} of ${trip.budgetTarget.toLocaleString()}
+                  {trip.budgetTarget != null && trip.budgetTarget > 0 && singleCurrency
+                    ? `${spentLabel} of ${formatMoney(trip.budgetTarget, primaryCurrency)}`
+                    : spentLabel || 'Track spending'}
                   {isFeatureEnabled('budget') ? ' ›' : ''}
                 </Text>
               </Pressable>
-            )}
+            ) : null}
             {memberNames.length > 0 && (
-              <View style={styles.membersRow}>
+              <Pressable
+                style={styles.membersRow}
+                onPress={() => router.push(`/trip/${id}/members`)}
+                accessibilityRole="button"
+                accessibilityLabel="Travelers"
+                accessibilityHint="Opens travelers and invites"
+              >
                 <Text style={styles.summaryLabel}>TRAVELERS</Text>
-                <AvatarStack names={memberNames} />
-              </View>
+                <View style={styles.membersRowEnd}>
+                  <AvatarStack names={memberNames} />
+                  <Ionicons name="chevron-forward" size={18} color={colors.muted} />
+                </View>
+              </Pressable>
             )}
           </GlassCard>
 
@@ -242,6 +309,7 @@ const styles = StyleSheet.create({
   summaryValue: { ...typography.h3, fontSize: 16 },
   summarySpaced: { marginTop: spacing.lg },
   membersRow: { marginTop: spacing.lg, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  membersRowEnd: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   section: { marginBottom: spacing.xl },
   sectionTitle: { ...typography.h3, marginBottom: spacing.md },
   dayScroll: { marginTop: spacing.lg },

@@ -18,7 +18,7 @@ import { getTripStatus } from '@/utils/dates';
 import { useResponsive } from '@/hooks/useResponsive';
 import type { Trip } from '@/types';
 
-type Filter = 'all' | 'upcoming' | 'past';
+type Filter = 'all' | 'upcoming' | 'past' | 'archived';
 
 export default function TripsScreen() {
   const insets = useSafeAreaInsets();
@@ -28,8 +28,12 @@ export default function TripsScreen() {
   const [refreshing, setRefreshing] = useState(false);
 
   const filtered = useMemo(() => {
-    if (filter === 'all') return trips;
-    return trips.filter((t) => {
+    if (filter === 'archived') {
+      return trips.filter((t) => t.status === 'archived');
+    }
+    const active = trips.filter((t) => t.status !== 'archived');
+    if (filter === 'all') return active;
+    return active.filter((t) => {
       const status = getTripStatus(t.startDate, t.endDate);
       return filter === 'upcoming' ? status !== 'past' : status === 'past';
     });
@@ -46,7 +50,7 @@ export default function TripsScreen() {
       <ScreenHeader title="My Trips" subtitle={`${trips.length} journeys`} large />
       {isCompact ? (
         <View style={[styles.filtersRow, { paddingHorizontal: horizontalPadding }]}>
-          {(['all', 'upcoming', 'past'] as Filter[]).map((f) => (
+          {(['all', 'upcoming', 'past', 'archived'] as Filter[]).map((f) => (
             <View key={f} style={styles.filterItem}>
               <TagChip
                 label={f.charAt(0).toUpperCase() + f.slice(1)}
@@ -68,7 +72,7 @@ export default function TripsScreen() {
             { paddingHorizontal: horizontalPadding, gap: 8 },
           ]}
         >
-          {(['all', 'upcoming', 'past'] as Filter[]).map((f) => (
+          {(['all', 'upcoming', 'past', 'archived'] as Filter[]).map((f) => (
             <TagChip
               key={f}
               label={f.charAt(0).toUpperCase() + f.slice(1)}

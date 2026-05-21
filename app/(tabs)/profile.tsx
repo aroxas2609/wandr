@@ -1,5 +1,8 @@
 import { View, Text, StyleSheet, ScrollView, Pressable, Switch, Alert, Share } from 'react-native';
-import { router } from 'expo-router';
+import { Image } from 'expo-image';
+import { router, type Href } from 'expo-router';
+
+const EDIT_PROFILE_HREF = '/profile/edit' as Href;
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useEffect, useState } from 'react';
@@ -62,16 +65,28 @@ export default function ProfileScreen() {
     >
       <ScreenHeader title="Profile" large />
       <View style={styles.avatarSection}>
-        <View style={styles.avatar}>
-          <Text style={styles.avatarText}>
-            {user?.fullName?.charAt(0).toUpperCase() ?? 'W'}
-          </Text>
-        </View>
+        <Pressable onPress={() => router.push(EDIT_PROFILE_HREF)} accessibilityRole="button">
+          {user?.avatarUrl ? (
+            <Image source={{ uri: user.avatarUrl }} style={styles.avatarImage} contentFit="cover" />
+          ) : (
+            <View style={styles.avatar}>
+              <Text style={styles.avatarText}>
+                {user?.fullName?.charAt(0).toUpperCase() ?? 'W'}
+              </Text>
+            </View>
+          )}
+        </Pressable>
         <Text style={styles.name}>{user?.fullName ?? 'Traveler'}</Text>
         <Text style={styles.email}>{user?.email ?? ''}</Text>
       </View>
 
       <GlassCard style={styles.card}>
+        <SettingsRow
+          icon="person-outline"
+          label="Edit Profile"
+          subtitle="Name and photo"
+          onPress={() => router.push(EDIT_PROFILE_HREF)}
+        />
         <SettingsRow
           icon="settings-outline"
           label="Settings"
@@ -184,6 +199,14 @@ const styles = StyleSheet.create({
     borderColor: colors.gold,
     alignItems: 'center',
     justifyContent: 'center',
+    marginBottom: spacing.md,
+  },
+  avatarImage: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    borderWidth: 2,
+    borderColor: colors.gold,
     marginBottom: spacing.md,
   },
   avatarText: { ...typography.h1, color: colors.gold },

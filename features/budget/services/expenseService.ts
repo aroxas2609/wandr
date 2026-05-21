@@ -2,7 +2,8 @@ import { getJson, setJson, StorageKeys } from '@/lib/mmkv';
 import { generateId } from '@/lib/ids';
 import { getSupabaseClient } from '@/services/supabase/client';
 import { enqueue } from '@/services/sync/syncQueue';
-import type { Expense } from '@/types';
+import { computeEqualSplits } from '@/utils/splitBalances';
+import type { Expense, ExpenseSplit } from '@/types';
 import type { ExpenseFormData } from '../schemas/expenseSchema';
 
 function getLocalExpenses(): Expense[] {
@@ -14,16 +15,24 @@ function saveExpenses(expenses: Expense[]): void {
 }
 
 function mapDbExpense(row: Record<string, unknown>): Expense {
+  const splitsRaw = row.expense_splits as { user_id: string; amount: number }[] | undefined;
+  const splits: ExpenseSplit[] | undefined = splitsRaw?.map((s) => ({
+    userId: s.user_id,
+    amount: Number(s.amount),
+  }));
+
   return {
     id: row.id as string,
     tripId: row.trip_id as string,
     userId: row.user_id as string,
+    paidByUserId: (row.paid_by_user_id as string) ?? (row.user_id as string),
     title: row.title as string,
     amount: Number(row.amount),
     currency: (row.currency as string) ?? 'USD',
     category: row.category as string,
     date: row.date as string,
     notes: row.notes as string | undefined,
+    splits,
     createdAt: row.created_at as string,
   };
 }
@@ -33,6 +42,7 @@ function mapExpenseToDb(expense: Expense) {
     id: expense.id,
     trip_id: expense.tripId,
     user_id: expense.userId,
+    paid_by_user_id: expense.paidByUserId,
     title: expense.title,
     amount: expense.amount,
     currency: expense.currency,
@@ -55,7 +65,7 @@ export async function fetchExpenses(tripId: string): Promise<Expense[]> {
 
   const { data, error } = await client
     .from('expenses')
-    .select('*')
+    .select('*, expense_splits(user_id, amount)')
     .eq('trip_id', tripId)
     .order('date', { ascending: false });
   if (error) throw error;
@@ -73,16 +83,26 @@ export async function createExpense(
   userId: string,
   form: ExpenseFormData
 ): Promise<Expense> {
+  const amount = parseFloat(form.amount);
+  const paidByUserId = form.paidByUserId ?? userId;
+  const participantIds =
+    form.splitWithUserIds && form.splitWithUserIds.length > 0
+      ? form.splitWithUserIds
+      : [paidByUserId];
+  const splitRows = computeEqualSplits(amount, participantIds);
+
   const expense: Expense = {
     id: generateId(),
     tripId,
     userId,
+    paidByUserId,
     title: form.title,
-    amount: parseFloat(form.amount),
+    amount,
     currency: form.currency ?? 'USD',
     category: form.category,
     date: form.date,
     notes: form.notes,
+    splits: splitRows,
     createdAt: new Date().toISOString(),
   };
 
@@ -93,6 +113,17 @@ export async function createExpense(
   if (client) {
     const { error } = await client.from('expenses').insert(mapExpenseToDb(expense));
     if (error) throw error;
+
+    if (splitRows.length > 0) {
+      const { error: splitError } = await client.from('expense_splits').insert(
+        splitRows.map((s) => ({
+          expense_id: expense.id,
+          user_id: s.userId,
+          amount: s.amount,
+        }))
+      );
+      if (splitError) throw splitError;
+    }
   } else {
     enqueue('insert', 'expenses', expense as unknown as Record<string, unknown>);
   }

@@ -2,6 +2,9 @@ import {
   calculateTotalExpenses,
   calculateBudgetProgress,
   groupExpensesByCategory,
+  totalsByCurrency,
+  formatMoney,
+  hasSingleCurrency,
 } from '@/utils/budget';
 
 describe('budget utils', () => {
@@ -26,5 +29,15 @@ describe('budget utils', () => {
     const grouped = groupExpensesByCategory(expenses);
     expect(grouped.Food).toBe(150);
     expect(grouped.Transport).toBe(200);
+  });
+
+  it('totals by currency', () => {
+    const multi = [
+      { amount: 10, category: 'Food', currency: 'USD' },
+      { amount: 20, category: 'Food', currency: 'EUR' },
+    ];
+    expect(totalsByCurrency(multi)).toEqual({ USD: 10, EUR: 20 });
+    expect(hasSingleCurrency(multi)).toBe(false);
+    expect(formatMoney(12.5, 'EUR')).toContain('12.5');
   });
 });

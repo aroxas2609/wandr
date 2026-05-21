@@ -1,10 +1,46 @@
+import { getCurrencySymbol } from '@/constants/currencies';
+
 export interface Expense {
   amount: number;
   category: string;
+  currency?: string;
 }
 
-export function calculateTotalExpenses(expenses: Expense[]): number {
-  return expenses.reduce((sum, e) => sum + e.amount, 0);
+export function formatMoney(amount: number, currency = 'USD'): string {
+  const symbol = getCurrencySymbol(currency);
+  const formatted = amount.toLocaleString(undefined, {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  });
+  if (symbol.length <= 2 && symbol !== currency) {
+    return `${symbol}${formatted}`;
+  }
+  return `${currency} ${formatted}`;
+}
+
+export function calculateTotalExpenses(expenses: Expense[], currency = 'USD'): number {
+  return expenses
+    .filter((e) => (e.currency ?? 'USD') === currency)
+    .reduce((sum, e) => sum + e.amount, 0);
+}
+
+export function totalsByCurrency(expenses: Expense[]): Record<string, number> {
+  return expenses.reduce<Record<string, number>>((acc, e) => {
+    const code = e.currency ?? 'USD';
+    acc[code] = (acc[code] ?? 0) + e.amount;
+    return acc;
+  }, {});
+}
+
+export function formatTotalsLine(totals: Record<string, number>): string {
+  return Object.entries(totals)
+    .map(([code, amount]) => formatMoney(amount, code))
+    .join(' · ');
+}
+
+export function hasSingleCurrency(expenses: Expense[]): boolean {
+  const codes = new Set(expenses.map((e) => e.currency ?? 'USD'));
+  return codes.size <= 1;
 }
 
 export function calculateBudgetProgress(

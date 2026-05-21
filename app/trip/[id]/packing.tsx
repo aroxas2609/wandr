@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, Pressable, TextInput, Platform } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { ScreenHeader, GlassCard, PremiumButton } from '@/components';
+import { ScreenHeader, GlassCard, PremiumButton, ViewOnlyBanner } from '@/components';
+import { useTripAccess } from '@/hooks/useTripAccess';
 import { useTrip } from '@/features/trips/hooks/useTrips';
 import {
   usePackingItems,
@@ -20,6 +21,7 @@ import { colors, typography, spacing } from '@/theme';
 export default function PackingScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { data: trip } = useTrip(id);
+  const { canEdit, isViewer } = useTripAccess(id);
   const { data: items = [] } = usePackingItems(id);
   const togglePacking = useTogglePacking(id);
   const createItem = useCreatePackingItem(id);
@@ -77,7 +79,7 @@ export default function PackingScreen() {
         backHref={`/trip/${id}`}
         subtitle={trip?.title}
         rightAction={
-          items.length > 0 ? (
+          canEdit && items.length > 0 ? (
             <Pressable
               onPress={() => setIsEditing((v) => !v)}
               hitSlop={8}
@@ -90,6 +92,7 @@ export default function PackingScreen() {
         }
       />
       <ScrollView contentContainerStyle={styles.content}>
+        {isViewer ? <ViewOnlyBanner /> : null}
         <GlassCard style={styles.progressCard}>
           <Text style={styles.progressText}>
             {progress.packed} of {progress.total} packed ({progress.percentage}%)
@@ -97,17 +100,20 @@ export default function PackingScreen() {
           <View style={styles.track}>
             <View style={[styles.fill, { width: `${progress.percentage}%` }]} />
           </View>
-          <PremiumButton
-            label="Suggest items"
-            variant="outline"
-            onPress={() => void handleSuggest()}
-            loading={suggest.isPending}
-            disabled={!trip}
-          />
+          {canEdit ? (
+            <PremiumButton
+              label="Suggest items"
+              variant="outline"
+              onPress={() => void handleSuggest()}
+              loading={suggest.isPending}
+              disabled={!trip}
+            />
+          ) : null}
         </GlassCard>
 
         {actionError ? <Text style={styles.error}>{actionError}</Text> : null}
 
+        {canEdit ? (
         <View style={styles.addRow}>
           <TextInput
             style={styles.input}
@@ -126,6 +132,7 @@ export default function PackingScreen() {
             <Ionicons name="add" size={24} color={colors.background} />
           </Pressable>
         </View>
+        ) : null}
 
         {isEditing ? (
           <Text style={styles.editHint}>Tap × to remove an item</Text>
@@ -141,7 +148,7 @@ export default function PackingScreen() {
                 <Pressable
                   style={styles.rowMain}
                   onPress={() => {
-                    if (isEditing) return;
+                    if (isEditing || !canEdit) return;
                     togglePacking.mutate({ id: item.id, packed: !item.packed });
                   }}
                   onLongPress={

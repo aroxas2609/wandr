@@ -1,6 +1,6 @@
 import type { TravelStyle } from '@/constants/travelStyles';
 
-export type TripStatus = 'upcoming' | 'active' | 'past' | 'draft';
+export type TripStatus = 'upcoming' | 'active' | 'past' | 'draft' | 'archived';
 
 export interface Trip {
   id: string;

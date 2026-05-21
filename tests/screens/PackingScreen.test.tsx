@@ -22,6 +22,17 @@ jest.mock('@/features/trips/hooks/useTrips', () => ({
   }),
 }));
 
+jest.mock('@/hooks/useTripAccess', () => ({
+  useTripAccess: () => ({
+    canEdit: true,
+    isViewer: false,
+    isOwner: true,
+    canManageMembers: true,
+    role: 'owner',
+    isLoading: false,
+  }),
+}));
+
 jest.mock('@/features/packing/hooks/usePacking', () => ({
   usePackingItems: () => ({
     data: [

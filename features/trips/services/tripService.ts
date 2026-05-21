@@ -27,6 +27,7 @@ function saveLocalDays(days: ItineraryDay[]): void {
 }
 
 function enrichTripStatus(trip: Trip): Trip {
+  if (trip.status === 'archived') return trip;
   return { ...trip, status: getTripStatus(trip.startDate, trip.endDate) };
 }
 
@@ -254,6 +255,42 @@ export async function deleteTrip(id: string): Promise<void> {
   if (!data?.length) throw permissionDeniedError('trip-delete');
   saveLocalTrips(getLocalTrips().filter((t) => t.id !== id));
   saveLocalDays(getLocalDays().filter((d) => d.tripId !== id));
+}
+
+export async function archiveTrip(id: string): Promise<Trip> {
+  const client = requireSupabaseClient();
+  const { data, error } = await client
+    .from('trips')
+    .update({ status: 'archived', updated_at: new Date().toISOString() })
+    .eq('id', id)
+    .select()
+    .single();
+  if (error) throw error;
+  if (!data) throw permissionDeniedError('trip-save');
+  const saved = enrichTripStatus(mapDbTrip(data));
+  const trips = getLocalTrips();
+  const index = trips.findIndex((t) => t.id === id);
+  if (index >= 0) {
+    trips[index] = saved;
+    saveLocalTrips(trips);
+  }
+  return saved;
+}
+
+export async function unarchiveTrip(id: string): Promise<Trip> {
+  const trip = await fetchTrip(id);
+  if (!trip) throw new Error('Trip not found');
+  const nextStatus = getTripStatus(trip.startDate, trip.endDate);
+  const client = requireSupabaseClient();
+  const { data, error } = await client
+    .from('trips')
+    .update({ status: nextStatus, updated_at: new Date().toISOString() })
+    .eq('id', id)
+    .select()
+    .single();
+  if (error) throw error;
+  if (!data) throw permissionDeniedError('trip-save');
+  return enrichTripStatus(mapDbTrip(data));
 }
 
 export async function fetchTripMembers(tripId: string): Promise<TripMember[]> {
