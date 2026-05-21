@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Pressable, Share } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Pressable, Share, RefreshControl } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { buildTripJoinUrl } from '@/lib/tripInviteLink';
 import {
@@ -30,8 +30,9 @@ type InviteFeedback =
 export default function MembersScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const user = useAuthStore((s) => s.user);
-  const { data: trip } = useTrip(id);
-  const { data: members = [], refetch } = useTripMembers(id);
+  const { data: trip, refetch: refetchTrip } = useTrip(id);
+  const { data: members = [], refetch: refetchMembers, isRefetching } = useTripMembers(id);
+  const [refreshing, setRefreshing] = useState(false);
   const [email, setEmail] = useState('');
   const [feedback, setFeedback] = useState<InviteFeedback | null>(null);
   const [loading, setLoading] = useState(false);
@@ -63,6 +64,12 @@ export default function MembersScreen() {
   const openProfile = (m: TripMember) => setProfileMember(m);
   const closeProfile = () => setProfileMember(null);
 
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await Promise.all([refetchTrip(), refetchMembers()]);
+    setRefreshing(false);
+  };
+
   const shareInviteForToken = async (token: string, inviteeEmail?: string) => {
     if (!trip) return;
     const joinUrl = buildTripJoinUrl(token);
@@ -84,7 +91,7 @@ export default function MembersScreen() {
         inviteRole,
         user?.id
       );
-      await refetch();
+      await refetchMembers();
       const invited = email.trim();
       setEmail('');
 
@@ -117,7 +124,7 @@ export default function MembersScreen() {
       onConfirm: async () => {
         try {
           await removeMember(id, member.userId, member.email);
-          await refetch();
+          await refetchMembers();
           if (
             member.email &&
             feedback &&
@@ -144,7 +151,17 @@ export default function MembersScreen() {
         backHref={`/trip/${id}`}
         subtitle={trip?.title}
       />
-      <ScrollView contentContainerStyle={styles.content}>
+      <ScrollView
+        contentContainerStyle={styles.content}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing || isRefetching}
+            onRefresh={onRefresh}
+            tintColor={colors.gold}
+            colors={[colors.gold]}
+          />
+        }
+      >
         <GlassCard style={styles.card}>
           <Text style={styles.label}>TRAVELERS</Text>
           <AvatarStack
