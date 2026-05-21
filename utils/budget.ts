@@ -1,4 +1,4 @@
-import { getCurrencySymbol } from '@/constants/currencies';
+import { DEFAULT_TRIP_CURRENCY, getCurrencySymbol } from '@/constants/currencies';
 
 export interface Expense {
   amount: number;
@@ -6,7 +6,7 @@ export interface Expense {
   currency?: string;
 }
 
-export function formatMoney(amount: number, currency = 'USD'): string {
+export function formatMoney(amount: number, currency = DEFAULT_TRIP_CURRENCY): string {
   const symbol = getCurrencySymbol(currency);
   const formatted = amount.toLocaleString(undefined, {
     minimumFractionDigits: 0,
@@ -18,15 +18,15 @@ export function formatMoney(amount: number, currency = 'USD'): string {
   return `${currency} ${formatted}`;
 }
 
-export function calculateTotalExpenses(expenses: Expense[], currency = 'USD'): number {
+export function calculateTotalExpenses(expenses: Expense[], currency = DEFAULT_TRIP_CURRENCY): number {
   return expenses
-    .filter((e) => (e.currency ?? 'USD') === currency)
+    .filter((e) => (e.currency ?? DEFAULT_TRIP_CURRENCY) === currency)
     .reduce((sum, e) => sum + e.amount, 0);
 }
 
 export function totalsByCurrency(expenses: Expense[]): Record<string, number> {
   return expenses.reduce<Record<string, number>>((acc, e) => {
-    const code = e.currency ?? 'USD';
+    const code = e.currency ?? DEFAULT_TRIP_CURRENCY;
     acc[code] = (acc[code] ?? 0) + e.amount;
     return acc;
   }, {});
@@ -39,7 +39,7 @@ export function formatTotalsLine(totals: Record<string, number>): string {
 }
 
 export function hasSingleCurrency(expenses: Expense[]): boolean {
-  const codes = new Set(expenses.map((e) => e.currency ?? 'USD'));
+  const codes = new Set(expenses.map((e) => e.currency ?? DEFAULT_TRIP_CURRENCY));
   return codes.size <= 1;
 }
 

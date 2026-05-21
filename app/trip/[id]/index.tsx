@@ -15,6 +15,7 @@ import {
 } from '@/components';
 import { useTripAccess } from '@/hooks/useTripAccess';
 import { isFeatureEnabled } from '@/constants/features';
+import { DEFAULT_TRIP_CURRENCY } from '@/constants/currencies';
 import {
   calculateTotalExpenses,
   totalsByCurrency,
@@ -41,6 +42,7 @@ import { getErrorMessage } from '@/lib/errors';
 import { resolveMemberDisplayName } from '@/lib/memberDisplayName';
 import { navigateBack } from '@/lib/navigation';
 import { showAppMessage } from '@/stores/appMessageStore';
+import { useAuthStore } from '@/stores/authStore';
 import { colors, typography, spacing } from '@/theme';
 
 export default function TripDetailScreen() {
@@ -58,9 +60,10 @@ export default function TripDetailScreen() {
   const [deleting, setDeleting] = useState(false);
   const [archiving, setArchiving] = useState(false);
   const [openingPlanner, setOpeningPlanner] = useState(false);
+  const user = useAuthStore((s) => s.user);
   const currencyTotals = totalsByCurrency(expenses);
   const singleCurrency = hasSingleCurrency(expenses);
-  const primaryCurrency = Object.keys(currencyTotals)[0] ?? 'USD';
+  const primaryCurrency = Object.keys(currencyTotals)[0] ?? DEFAULT_TRIP_CURRENCY;
   const spent = singleCurrency
     ? calculateTotalExpenses(expenses, primaryCurrency)
     : 0;
@@ -89,9 +92,16 @@ export default function TripDetailScreen() {
   }
 
   const previewActivities = getNextActivities(activities, 3);
-  const memberNames = members.map((m) =>
-    resolveMemberDisplayName({ fullName: m.fullName, email: m.email })
-  );
+  const travelerAvatars = members.map((m) => ({
+    key: m.userId,
+    name: resolveMemberDisplayName({ fullName: m.fullName, email: m.email }),
+    avatarUrl:
+      m.status === 'pending'
+        ? undefined
+        : m.userId === user?.id && user?.avatarUrl
+          ? user.avatarUrl
+          : m.avatarUrl,
+  }));
 
   const handleArchive = () => {
     confirmAction('Archive Trip', 'Hide this trip from your main list. You can find it under Archived.', {
@@ -214,7 +224,7 @@ export default function TripDetailScreen() {
                 </Text>
               </Pressable>
             ) : null}
-            {memberNames.length > 0 && (
+            {travelerAvatars.length > 0 && (
               <Pressable
                 style={styles.membersRow}
                 onPress={() => router.push(`/trip/${id}/members`)}
@@ -224,7 +234,7 @@ export default function TripDetailScreen() {
               >
                 <Text style={styles.summaryLabel}>TRAVELERS</Text>
                 <View style={styles.membersRowEnd}>
-                  <AvatarStack names={memberNames} />
+                  <AvatarStack members={travelerAvatars} />
                   <Ionicons name="chevron-forward" size={18} color={colors.muted} />
                 </View>
               </Pressable>

@@ -51,3 +51,46 @@ export function formatBalanceLabel(amount: number): string {
   if (amount > 0) return `Owed ${amount.toFixed(2)}`;
   return `Owes ${Math.abs(amount).toFixed(2)}`;
 }
+
+export interface SettleUpPayment {
+  fromUserId: string;
+  toUserId: string;
+  amount: number;
+}
+
+/** Minimum transfers so everyone’s net balance reaches zero. */
+export function computeSettleUpPayments(
+  balances: Record<string, number>
+): SettleUpPayment[] {
+  const debtors: { userId: string; amount: number }[] = [];
+  const creditors: { userId: string; amount: number }[] = [];
+
+  for (const [userId, balance] of Object.entries(balances)) {
+    if (balance < -0.01) debtors.push({ userId, amount: -balance });
+    else if (balance > 0.01) creditors.push({ userId, amount: balance });
+  }
+
+  debtors.sort((a, b) => b.amount - a.amount);
+  creditors.sort((a, b) => b.amount - a.amount);
+
+  const payments: SettleUpPayment[] = [];
+  let d = 0;
+  let c = 0;
+
+  while (d < debtors.length && c < creditors.length) {
+    const pay = Math.min(debtors[d].amount, creditors[c].amount);
+    if (pay >= 0.01) {
+      payments.push({
+        fromUserId: debtors[d].userId,
+        toUserId: creditors[c].userId,
+        amount: Math.round(pay * 100) / 100,
+      });
+    }
+    debtors[d].amount -= pay;
+    creditors[c].amount -= pay;
+    if (debtors[d].amount < 0.01) d += 1;
+    if (creditors[c].amount < 0.01) c += 1;
+  }
+
+  return payments;
+}

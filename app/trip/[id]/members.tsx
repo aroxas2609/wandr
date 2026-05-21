@@ -8,9 +8,12 @@ import {
   FormInput,
   PremiumButton,
   AvatarStack,
+  MemberAvatar,
+  TravelerProfileModal,
   DeleteIconButton,
   TagChip,
 } from '@/components';
+import type { TripMember } from '@/types';
 import { useTrip, useTripMembers } from '@/features/trips/hooks/useTrips';
 import { inviteMemberByEmail, removeMember } from '@/features/collaboration/services/memberService';
 import { useAuthStore } from '@/stores/authStore';
@@ -33,18 +36,32 @@ export default function MembersScreen() {
   const [feedback, setFeedback] = useState<InviteFeedback | null>(null);
   const [loading, setLoading] = useState(false);
   const [inviteRole, setInviteRole] = useState<'editor' | 'viewer'>('editor');
+  const [profileMember, setProfileMember] = useState<TripMember | null>(null);
 
   const isOwner = trip?.ownerId === user?.id;
   const displayName = (m: (typeof members)[number]) =>
     user?.id === m.userId && user.fullName && user.fullName !== 'Traveler'
       ? user.fullName
       : m.fullName;
-  const memberNames = members.map(displayName);
+  const avatarForMember = (m: (typeof members)[number]) => {
+    if (m.status === 'pending') return undefined;
+    if (m.userId === user?.id && user.avatarUrl) return user.avatarUrl;
+    return m.avatarUrl;
+  };
+
+  const stackMembers = members.map((m) => ({
+    key: m.userId,
+    name: displayName(m),
+    avatarUrl: avatarForMember(m),
+  }));
   const pendingInvites = members.filter(
     (m) => m.status === 'pending' && m.inviteToken
   );
   const latestInviteToken =
     feedback && feedback.status !== 'error' ? feedback.token : null;
+
+  const openProfile = (m: TripMember) => setProfileMember(m);
+  const closeProfile = () => setProfileMember(null);
 
   const shareInviteForToken = async (token: string, inviteeEmail?: string) => {
     if (!trip) return;
@@ -130,16 +147,34 @@ export default function MembersScreen() {
       <ScrollView contentContainerStyle={styles.content}>
         <GlassCard style={styles.card}>
           <Text style={styles.label}>TRAVELERS</Text>
-          <AvatarStack names={memberNames} />
+          <AvatarStack
+            members={stackMembers}
+            onMemberPress={(stackItem) => {
+              const m = members.find((member) => member.userId === stackItem.key);
+              if (m) openProfile(m);
+            }}
+          />
           {members.map((m) => (
             <View key={m.userId} style={styles.memberRow}>
-              <View style={styles.memberInfo}>
+              <MemberAvatar
+                name={displayName(m)}
+                avatarUrl={avatarForMember(m)}
+                size={44}
+                onPress={() => openProfile(m)}
+              />
+              <Pressable
+                style={styles.memberInfo}
+                onPress={() => openProfile(m)}
+                accessibilityRole="button"
+                accessibilityLabel={`${displayName(m)} profile`}
+                accessibilityHint="View profile"
+              >
                 <Text style={styles.memberName}>{displayName(m)}</Text>
                 <Text style={styles.role}>
                   {m.status === 'pending' ? 'Pending invite' : m.role}
                   {m.status === 'pending' && m.inviteToken ? ` · ${m.inviteToken}` : ''}
                 </Text>
-              </View>
+              </Pressable>
               <View style={styles.memberActions}>
                 {isOwner && m.status === 'pending' && m.inviteToken ? (
                   <Pressable
@@ -265,6 +300,16 @@ export default function MembersScreen() {
           </GlassCard>
         )}
       </ScrollView>
+
+      <TravelerProfileModal
+        visible={!!profileMember}
+        onClose={closeProfile}
+        member={profileMember}
+        displayName={profileMember ? displayName(profileMember) : ''}
+        avatarUrl={profileMember ? avatarForMember(profileMember) : undefined}
+        isSelf={!!profileMember && profileMember.userId === user?.id}
+        tripTitle={trip?.title}
+      />
     </View>
   );
 }
@@ -281,7 +326,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderTopWidth: 1,
     borderTopColor: colors.glassBorder,
-    gap: spacing.sm,
+    gap: spacing.md,
   },
   memberInfo: { flex: 1, minWidth: 0 },
   memberActions: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },

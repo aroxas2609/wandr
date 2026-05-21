@@ -1,13 +1,19 @@
 import { View, Text, StyleSheet } from 'react-native';
 import { colors, typography, spacing } from '@/theme';
-import { calculateBudgetProgress } from '@/utils/budget';
+import { DEFAULT_TRIP_CURRENCY } from '@/constants/currencies';
+import { calculateBudgetProgress, formatMoney } from '@/utils/budget';
 
 interface BudgetProgressBarProps {
   spent: number;
   target: number;
+  currency?: string;
 }
 
-export function BudgetProgressBar({ spent, target }: BudgetProgressBarProps) {
+export function BudgetProgressBar({
+  spent,
+  target,
+  currency = DEFAULT_TRIP_CURRENCY,
+}: BudgetProgressBarProps) {
   const { percentage, remaining, isOver } = calculateBudgetProgress(spent, target);
 
   return (
@@ -15,7 +21,7 @@ export function BudgetProgressBar({ spent, target }: BudgetProgressBarProps) {
       <View style={styles.row}>
         <Text style={styles.label}>Spent</Text>
         <Text style={[styles.amount, isOver && styles.over]}>
-          ${spent.toLocaleString()} / ${target.toLocaleString()}
+          {formatMoney(spent, currency)} / {formatMoney(target, currency)}
         </Text>
       </View>
       <View style={styles.track}>
@@ -29,8 +35,8 @@ export function BudgetProgressBar({ spent, target }: BudgetProgressBarProps) {
       </View>
       <Text style={styles.caption}>
         {isOver
-          ? `Over budget by $${(spent - target).toLocaleString()}`
-          : `$${remaining.toLocaleString()} remaining`}
+          ? `Over budget by ${formatMoney(spent - target, currency)}`
+          : `${formatMoney(remaining, currency)} remaining`}
       </Text>
     </View>
   );

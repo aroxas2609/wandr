@@ -2,6 +2,7 @@ import { getJson, setJson, StorageKeys } from '@/lib/mmkv';
 import { generateId } from '@/lib/ids';
 import { getSupabaseClient } from '@/services/supabase/client';
 import { enqueue } from '@/services/sync/syncQueue';
+import { DEFAULT_TRIP_CURRENCY } from '@/constants/currencies';
 import { computeEqualSplits } from '@/utils/splitBalances';
 import type { Expense, ExpenseSplit } from '@/types';
 import type { ExpenseFormData } from '../schemas/expenseSchema';
@@ -28,7 +29,7 @@ function mapDbExpense(row: Record<string, unknown>): Expense {
     paidByUserId: (row.paid_by_user_id as string) ?? (row.user_id as string),
     title: row.title as string,
     amount: Number(row.amount),
-    currency: (row.currency as string) ?? 'USD',
+    currency: (row.currency as string) ?? DEFAULT_TRIP_CURRENCY,
     category: row.category as string,
     date: row.date as string,
     notes: row.notes as string | undefined,
@@ -98,7 +99,7 @@ export async function createExpense(
     paidByUserId,
     title: form.title,
     amount,
-    currency: form.currency ?? 'USD',
+    currency: form.currency ?? DEFAULT_TRIP_CURRENCY,
     category: form.category,
     date: form.date,
     notes: form.notes,
