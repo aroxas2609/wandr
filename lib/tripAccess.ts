@@ -6,6 +6,9 @@ export interface TripAccess {
   role: TripAccessRole;
   isOwner: boolean;
   canEdit: boolean;
+  /** Send invites and share join links (owner + editor). */
+  canInvite: boolean;
+  /** Remove travelers and pending invites (owner only). */
   canManageMembers: boolean;
   isViewer: boolean;
 }
@@ -20,6 +23,7 @@ export function resolveTripAccess(
       role: null,
       isOwner: false,
       canEdit: false,
+      canInvite: false,
       canManageMembers: false,
       isViewer: false,
     };
@@ -30,6 +34,7 @@ export function resolveTripAccess(
       role: 'owner',
       isOwner: true,
       canEdit: true,
+      canInvite: true,
       canManageMembers: true,
       isViewer: false,
     };
@@ -43,6 +48,7 @@ export function resolveTripAccess(
       role: 'editor',
       isOwner: false,
       canEdit: true,
+      canInvite: true,
       canManageMembers: false,
       isViewer: false,
     };
@@ -53,6 +59,7 @@ export function resolveTripAccess(
       role: 'viewer',
       isOwner: false,
       canEdit: false,
+      canInvite: false,
       canManageMembers: false,
       isViewer: true,
     };
@@ -62,6 +69,7 @@ export function resolveTripAccess(
     role: null,
     isOwner: false,
     canEdit: false,
+    canInvite: false,
     canManageMembers: false,
     isViewer: false,
   };

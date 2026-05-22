@@ -15,6 +15,7 @@ import {
   TagChip,
 } from '@/components';
 import type { TripMember } from '@/types';
+import { useTripAccess } from '@/hooks/useTripAccess';
 import { useTrip, useTripMembers } from '@/features/trips/hooks/useTrips';
 import { inviteMemberByEmail, removeMember } from '@/features/collaboration/services/memberService';
 import { useAuthStore } from '@/stores/authStore';
@@ -48,7 +49,7 @@ export default function MembersScreen() {
     isBusy: isRefreshBusy,
   } = usePullToRefreshFeedback(isRefetching);
 
-  const isOwner = trip?.ownerId === user?.id;
+  const { canInvite, canManageMembers } = useTripAccess(id);
   const displayName = (m: (typeof members)[number]) =>
     user?.id === m.userId && user.fullName && user.fullName !== 'Traveler'
       ? user.fullName
@@ -213,7 +214,7 @@ export default function MembersScreen() {
                 </Text>
               </Pressable>
               <View style={styles.memberActions}>
-                {isOwner && m.status === 'pending' && m.inviteToken ? (
+                {canInvite && m.status === 'pending' && m.inviteToken ? (
                   <Pressable
                     onPress={() => void shareInviteForToken(m.inviteToken!, m.email)}
                     hitSlop={8}
@@ -223,7 +224,7 @@ export default function MembersScreen() {
                     <Text style={styles.link}>Share</Text>
                   </Pressable>
                 ) : null}
-                {isOwner && m.role !== 'owner' ? (
+                {canManageMembers && m.role !== 'owner' ? (
                   <DeleteIconButton
                     onPress={() => handleRemoveMember(m)}
                     accessibilityLabel={
@@ -238,7 +239,7 @@ export default function MembersScreen() {
           ))}
         </GlassCard>
 
-        {isOwner && pendingInvites.length > 0 && (
+        {canInvite && pendingInvites.length > 0 && (
           <GlassCard style={styles.card}>
             <Text style={styles.sectionTitle}>Share invite links</Text>
             <Text style={styles.shareHint}>
@@ -268,7 +269,7 @@ export default function MembersScreen() {
           </GlassCard>
         )}
 
-        {isOwner && (
+        {canInvite && (
           <GlassCard style={styles.card}>
             <Text style={styles.sectionTitle}>Invite by email</Text>
             <Text style={styles.roleLabel}>Role</Text>

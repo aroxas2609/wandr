@@ -14,7 +14,7 @@ const PERMISSION_MESSAGES: Record<ErrorContext, string> = {
   'trip-save':
     'Only the trip owner can change trip details (name, destination, dates, budget, and cover photo).',
   'trip-delete': 'Only the trip owner can delete this trip.',
-  'trip-invite': 'Only the trip owner can invite people to this trip.',
+  'trip-invite': 'Only the trip owner or an editor can invite people to this trip.',
   'trip-members': 'Only the trip owner can remove travelers from this trip.',
   'trip-viewer-readonly': 'You have view-only access on this trip.',
   'trip-editor-required': 'Only editors and the trip owner can make changes.',

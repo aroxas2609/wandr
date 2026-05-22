@@ -65,6 +65,7 @@ Run in order in the Supabase SQL editor:
 12. `supabase/join_trip_by_invite.sql` (**required** for invite links — lets guests join via code)
 13. `supabase/expense_splits.sql` (split expenses among travelers)
 14. `supabase/users_co_traveler_policy.sql` (traveler names/avatars on shared trips)
+15. `supabase/editor_invite_policies.sql` (editors can invite and share join links)
 
 Invite links use `wandr://trip/join?token=CODE` (or your web URL with the same path).
 
