@@ -7,7 +7,8 @@ CREATE TABLE IF NOT EXISTS trip_messages (
   body TEXT NOT NULL CHECK (
     char_length(trim(body)) > 0 AND char_length(body) <= 2000
   ),
-  created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
+  created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  updated_at TIMESTAMPTZ
 );
 
 CREATE INDEX IF NOT EXISTS idx_trip_messages_trip_created
@@ -22,6 +23,14 @@ CREATE POLICY "Trip messages insert by members" ON trip_messages
   FOR INSERT WITH CHECK (
     auth.uid() = user_id
     AND public.can_access_trip(trip_id)
+  );
+
+CREATE POLICY "Trip messages update own" ON trip_messages
+  FOR UPDATE USING (auth.uid() = user_id)
+  WITH CHECK (
+    auth.uid() = user_id
+    AND char_length(trim(body)) > 0
+    AND char_length(body) <= 2000
   );
 
 CREATE POLICY "Trip messages delete own or owner" ON trip_messages

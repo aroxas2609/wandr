@@ -68,7 +68,8 @@ Run in order in the Supabase SQL editor:
 15. `supabase/editor_invite_policies.sql` (editors can invite and share join links)
 16. `supabase/push_notifications.sql` (Expo push token + notification `type` / `data`)
 17. `supabase/trip_messages.sql` (trip-wide chat)
-18. Re-run `supabase/realtime_publication.sql` if `trip_messages` was added separately
+18. `supabase/trip_messages_edit.sql` (edit own messages — skip if you just ran step 17 on a fresh DB)
+19. Re-run `supabase/realtime_publication.sql` if `trip_messages` was added separately
 
 Invite links use `wandr://trip/join?token=CODE` (or your web URL with the same path).
 
