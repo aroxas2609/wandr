@@ -8,6 +8,7 @@ import { upsertUserProfile } from '@/services/auth/userService';
 import { useAuthStore } from '@/stores/authStore';
 import { queryClient } from '@/lib/queryClient';
 import { tripKeys } from '@/features/trips/hooks/useTrips';
+import { registerPushToken } from '@/services/push/registerPushToken';
 import { clearUserTripCache } from '@/lib/userDataCache';
 import type { User } from '@/types';
 import type { AuthError } from '@supabase/supabase-js';
@@ -89,6 +90,7 @@ export async function signIn(credentials: AuthCredentials): Promise<User> {
   await upsertUserProfile(user);
   useAuthStore.getState().setSessionReady(true);
   await queryClient.invalidateQueries({ queryKey: tripKeys.all });
+  void registerPushToken(user.id);
   return user;
 }
 
@@ -127,6 +129,7 @@ export async function signUp(data: RegisterData): Promise<User> {
   }
   useAuthStore.getState().setSessionReady(true);
   await queryClient.invalidateQueries({ queryKey: tripKeys.all });
+  void registerPushToken(user.id);
   return user;
 }
 

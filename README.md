@@ -60,14 +60,28 @@ Run in order in the Supabase SQL editor:
 7. `supabase/role_policies.sql` (editor vs viewer permissions)
 8. `supabase/trip_archive.sql` (archive trips)
 9. `supabase/avatars_storage.sql` (profile photos)
-10. `supabase/trip_invites.sql` (pending email invites)
+10. `supabase/trip_invites.sql` (pending invites by email — share link manually)
 11. `supabase/invite_lookup.sql` (resolve invite codes)
 12. `supabase/join_trip_by_invite.sql` (**required** for invite links — lets guests join via code)
 13. `supabase/expense_splits.sql` (split expenses among travelers)
 14. `supabase/users_co_traveler_policy.sql` (traveler names/avatars on shared trips)
 15. `supabase/editor_invite_policies.sql` (editors can invite and share join links)
+16. `supabase/push_notifications.sql` (Expo push token + notification `type` / `data`)
+17. `supabase/trip_messages.sql` (trip-wide chat)
+18. Re-run `supabase/realtime_publication.sql` if `trip_messages` was added separately
 
 Invite links use `wandr://trip/join?token=CODE` (or your web URL with the same path).
+
+### Push notifications
+
+1. **Deploy Edge Function** `dispatch-push` (from repo root, with [Supabase CLI](https://supabase.com/docs/guides/functions)):
+   ```bash
+   supabase functions deploy dispatch-push
+   ```
+2. **Expo push:** `expo-notifications` requires a new native build. Set `EXPO_PUBLIC_APP_URL` in `.env` and EAS secrets for web-style join/deep links. Configure iOS push credentials in EAS (`eas credentials`) for TestFlight/App Store builds.
+3. **App env:** Optional `EXPO_PUBLIC_EAS_PROJECT_ID` for push token registration (from `eas project:info`).
+
+Profile toggles **Push notifications** and **Trip updates** control whether remote pushes are sent (in-app notifications are always stored).
 
 ## Scripts
 

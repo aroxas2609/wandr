@@ -20,7 +20,9 @@ function subscribeTripChannel(
   const client = getSupabaseClient();
   if (!client) return null;
 
-  const channel = client.channel(`trip:${tripId}`);
+  // Unique name per day set — reusing `trip:${tripId}` after subscribe() throws.
+  const dayScope = dayIds.length > 0 ? dayIds.join(',') : '_';
+  const channel = client.channel(`trip:${tripId}:${dayScope}`);
 
   const handler =
     (table: string) =>
@@ -79,6 +81,17 @@ function subscribeTripChannel(
       filter: `trip_id=eq.${tripId}`,
     },
     handler('packing_items')
+  );
+
+  channel.on(
+    'postgres_changes',
+    {
+      event: '*',
+      schema: 'public',
+      table: 'trip_messages',
+      filter: `trip_id=eq.${tripId}`,
+    },
+    handler('trip_messages')
   );
 
   for (const dayId of dayIds) {

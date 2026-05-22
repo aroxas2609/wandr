@@ -4,7 +4,9 @@ export const features = {
   packing: true,
   map: true,
   sharedTrips: true,
+  chat: true,
   notifications: true,
+  pushNotifications: true,
   weather: true,
 } as const;
 

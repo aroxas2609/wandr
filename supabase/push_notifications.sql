@@ -1,0 +1,12 @@
+-- Push tokens and richer notification payloads (run after phase2_extras.sql)
+
+ALTER TABLE users
+  ADD COLUMN IF NOT EXISTS expo_push_token TEXT;
+
+CREATE INDEX IF NOT EXISTS idx_users_expo_push_token
+  ON users(expo_push_token)
+  WHERE expo_push_token IS NOT NULL;
+
+ALTER TABLE notifications
+  ADD COLUMN IF NOT EXISTS type TEXT,
+  ADD COLUMN IF NOT EXISTS data JSONB;

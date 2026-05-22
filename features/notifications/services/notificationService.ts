@@ -1,6 +1,6 @@
 import { getJson, setJson, StorageKeys } from '@/lib/mmkv';
 import { getSupabaseClient } from '@/services/supabase/client';
-import type { AppNotification } from '@/types';
+import type { AppNotification, NotificationData } from '@/types';
 
 function getLocalNotifications(): AppNotification[] {
   return getJson<AppNotification[]>(StorageKeys.notifications) ?? [];
@@ -11,12 +11,15 @@ function saveNotifications(items: AppNotification[]): void {
 }
 
 function mapDbNotification(row: Record<string, unknown>): AppNotification {
+  const rawData = row.data as NotificationData | null | undefined;
   return {
     id: row.id as string,
     userId: row.user_id as string,
     tripId: row.trip_id as string | undefined,
     title: row.title as string,
     body: row.body as string | undefined,
+    type: row.type as AppNotification['type'],
+    data: rawData ?? undefined,
     read: Boolean(row.read),
     createdAt: row.created_at as string,
   };

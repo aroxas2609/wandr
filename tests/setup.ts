@@ -96,6 +96,19 @@ jest.mock('react-native-maps', () => {
   };
 });
 
+jest.mock('expo-notifications', () => ({
+  setNotificationHandler: jest.fn(),
+  getPermissionsAsync: jest.fn().mockResolvedValue({ status: 'granted' }),
+  requestPermissionsAsync: jest.fn().mockResolvedValue({ status: 'granted' }),
+  getExpoPushTokenAsync: jest.fn().mockResolvedValue({ data: 'ExponentPushToken[test]' }),
+  addNotificationResponseReceivedListener: jest.fn(() => ({ remove: jest.fn() })),
+  getLastNotificationResponseAsync: jest.fn().mockResolvedValue(null),
+}));
+
+jest.mock('expo-device', () => ({
+  isDevice: true,
+}));
+
 jest.mock('expo-image-picker', () => ({
   launchImageLibraryAsync: jest.fn().mockResolvedValue({ canceled: true }),
   MediaTypeOptions: { Images: 'Images' },

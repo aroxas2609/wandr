@@ -37,4 +37,5 @@ export const StorageKeys = {
   seeded: 'data_seeded',
   pwaInstallBannerDismissed: 'pwa_install_banner_dismissed',
   pendingInviteToken: 'pending_invite_token',
+  chatLastRead: 'chat_last_read',
 } as const;

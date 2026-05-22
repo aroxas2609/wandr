@@ -45,6 +45,13 @@
     "plugins": [
       "expo-router",
       [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/icon.png",
+          "color": "#C9A962"
+        }
+      ],
+      [
         "expo-image-picker",
         {
           "photosPermission": "Allow Wandr to attach photos of travel documents.",

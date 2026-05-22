@@ -18,6 +18,7 @@ import type { TripMember } from '@/types';
 import { useTripAccess } from '@/hooks/useTripAccess';
 import { useTrip, useTripMembers } from '@/features/trips/hooks/useTrips';
 import { inviteMemberByEmail, removeMember } from '@/features/collaboration/services/memberService';
+import { notifyUser } from '@/features/notifications/services/createNotification';
 import { useAuthStore } from '@/stores/authStore';
 import { confirmAction } from '@/lib/confirm';
 import { getErrorMessage } from '@/lib/errors';
@@ -105,7 +106,8 @@ export default function MembersScreen() {
         inviteRole,
         user?.id
       );
-      await refetchMembers();
+      const refetchResult = await refetchMembers();
+      const refreshedMembers = refetchResult.data ?? members;
       const invited = email.trim();
       setEmail('');
 
@@ -114,11 +116,27 @@ export default function MembersScreen() {
         : { status: 'pending', email: invited, token };
       setFeedback(nextFeedback);
 
+      if (addedToTrip && trip) {
+        const added = refreshedMembers.find(
+          (m) => m.email?.toLowerCase() === invited.toLowerCase()
+        );
+        if (added && added.userId !== user?.id) {
+          void notifyUser({
+            userId: added.userId,
+            tripId: id,
+            title: `Added to ${trip.title}`,
+            body: 'You can open this trip from My Trips.',
+            type: 'member_joined',
+            data: { tripId: id },
+          });
+        }
+      }
+
       showAppMessage(
-        addedToTrip ? 'Added to trip' : 'Invite sent',
+        addedToTrip ? 'Added to trip' : 'Invite created',
         addedToTrip
           ? `${invited} has a Wandr account and can open this trip now.`
-          : `${invited} is not on Wandr yet. Share the invite code with them.`
+          : `${invited} is not on Wandr yet. Share the invite link or code below.`
       );
     } catch (e) {
       const message = getErrorMessage(e, undefined, 'trip-invite');
@@ -243,8 +261,7 @@ export default function MembersScreen() {
           <GlassCard style={styles.card}>
             <Text style={styles.sectionTitle}>Share invite links</Text>
             <Text style={styles.shareHint}>
-              Wandr does not email invites automatically. Copy or share each link with the
-              person you invited.
+              Share each link or code with your guest so they can join the trip.
             </Text>
             {pendingInvites.map((m) => {
               const token = m.inviteToken!;
@@ -309,8 +326,7 @@ export default function MembersScreen() {
               <View style={[styles.feedbackBox, styles.feedbackPending]}>
                 <Text style={styles.feedbackTitle}>Invite created</Text>
                 <Text style={styles.feedbackBody}>
-                  {feedback.email} is not on Wandr yet. They appear below as &quot;Pending invite&quot;.
-                  Share the code so they can sign up and join. Email is not sent automatically.
+                  {feedback.email} is not on Wandr yet. Share the link or code below so they can sign up and join.
                 </Text>
               </View>
             )}

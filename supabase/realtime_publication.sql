@@ -8,3 +8,4 @@ ALTER PUBLICATION supabase_realtime ADD TABLE activities;
 ALTER PUBLICATION supabase_realtime ADD TABLE trip_members;
 ALTER PUBLICATION supabase_realtime ADD TABLE expenses;
 ALTER PUBLICATION supabase_realtime ADD TABLE packing_items;
+ALTER PUBLICATION supabase_realtime ADD TABLE trip_messages;

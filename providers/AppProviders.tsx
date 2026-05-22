@@ -20,6 +20,8 @@ import { joinTripByToken } from '@/features/collaboration/services/memberService
 import { router } from 'expo-router';
 import type { User } from '@/types';
 import { useEffect } from 'react';
+import { useNotificationResponse } from '@/hooks/useNotificationResponse';
+import { registerPushToken } from '@/services/push/registerPushToken';
 
 interface AppProvidersProps {
   children: React.ReactNode;
@@ -37,6 +39,13 @@ export function AppProviders({ children }: AppProvidersProps) {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const sessionReady = useAuthStore((s) => s.sessionReady);
   const userId = useAuthStore((s) => s.user?.id);
+
+  useNotificationResponse();
+
+  useEffect(() => {
+    if (!sessionReady || !isAuthenticated || !userId) return;
+    void registerPushToken(userId);
+  }, [sessionReady, isAuthenticated, userId]);
 
   useEffect(() => {
     if (!sessionReady || !isAuthenticated || !userId) return;

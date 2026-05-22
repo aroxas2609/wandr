@@ -5,5 +5,6 @@ export * from './expense';
 export * from './packing';
 export * from './document';
 export * from './notification';
+export * from './tripMessage';
 export * from './weather';
 export * from './recommendation';

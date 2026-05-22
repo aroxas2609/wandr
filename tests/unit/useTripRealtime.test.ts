@@ -10,6 +10,7 @@ const handlers: Array<() => void> = [];
 type MockChannel = {
   on: jest.Mock;
   subscribe: jest.Mock;
+  unsubscribe: jest.Mock;
 };
 
 const mockChannel: MockChannel = {
@@ -21,6 +22,7 @@ const mockChannel: MockChannel = {
     cb?.('SUBSCRIBED');
     return mockChannel;
   }),
+  unsubscribe: jest.fn().mockResolvedValue('ok'),
 };
 
 jest.mock('@/services/supabase/client', () => ({

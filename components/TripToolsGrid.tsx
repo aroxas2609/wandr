@@ -3,6 +3,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { colors, typography, spacing, radius } from '@/theme';
 import { isFeatureEnabled } from '@/constants/features';
+import { useUnreadChatCount } from '@/features/chat/hooks/useUnreadChatCount';
 
 interface TripToolsGridProps {
   tripId: string;
@@ -52,9 +53,17 @@ const TOOLS: Tool[] = [
     route: 'members',
     feature: 'sharedTrips',
   },
+  {
+    key: 'chat',
+    label: 'Chat',
+    icon: 'chatbubbles-outline',
+    route: 'chat',
+    feature: 'chat',
+  },
 ];
 
 export function TripToolsGrid({ tripId }: TripToolsGridProps) {
+  const unreadChat = useUnreadChatCount(tripId);
   const visible = TOOLS.filter((t) => isFeatureEnabled(t.feature));
   if (visible.length === 0) return null;
 
@@ -62,16 +71,31 @@ export function TripToolsGrid({ tripId }: TripToolsGridProps) {
     <View style={styles.container}>
       <Text style={styles.title}>Trip Tools</Text>
       <View style={styles.grid}>
-        {visible.map((tool) => (
-          <Pressable
-            key={tool.key}
-            style={({ pressed }) => [styles.card, pressed && styles.pressed]}
-            onPress={() => router.push(`/trip/${tripId}/${tool.route}`)}
-          >
-            <Ionicons name={tool.icon} size={22} color={colors.gold} />
-            <Text style={styles.label}>{tool.label}</Text>
-          </Pressable>
-        ))}
+        {visible.map((tool) => {
+          const badge =
+            tool.key === 'chat' && unreadChat > 0
+              ? unreadChat > 99
+                ? '99+'
+                : String(unreadChat)
+              : null;
+          return (
+            <Pressable
+              key={tool.key}
+              style={({ pressed }) => [styles.card, pressed && styles.pressed]}
+              onPress={() => router.push(`/trip/${tripId}/${tool.route}`)}
+            >
+              <View style={styles.iconWrap}>
+                <Ionicons name={tool.icon} size={22} color={colors.gold} />
+                {badge ? (
+                  <View style={styles.badge}>
+                    <Text style={styles.badgeText}>{badge}</Text>
+                  </View>
+                ) : null}
+              </View>
+              <Text style={styles.label}>{tool.label}</Text>
+            </Pressable>
+          );
+        })}
       </View>
     </View>
   );
@@ -98,5 +122,25 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   pressed: { opacity: 0.85 },
+  iconWrap: { position: 'relative' },
+  badge: {
+    position: 'absolute',
+    top: -6,
+    right: -10,
+    minWidth: 18,
+    height: 18,
+    paddingHorizontal: 4,
+    borderRadius: 9,
+    backgroundColor: colors.gold,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  badgeText: {
+    ...typography.caption,
+    fontSize: 10,
+    lineHeight: 12,
+    fontWeight: '700',
+    color: colors.background,
+  },
   label: { ...typography.caption, color: colors.primary },
 });
