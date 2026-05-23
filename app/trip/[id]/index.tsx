@@ -83,7 +83,7 @@ export default function TripDetailScreen() {
   } = usePullToRefreshFeedback(isQueryRefetching);
   const deleteTrip = useDeleteTrip();
   const archiveTrip = useArchiveTrip();
-  const { isOwner, isViewer } = useTripAccess(id);
+  const { isOwner, canEdit, isViewer } = useTripAccess(id);
   const [deleting, setDeleting] = useState(false);
   const [archiving, setArchiving] = useState(false);
   const [openingPlanner, setOpeningPlanner] = useState(false);
@@ -235,9 +235,9 @@ export default function TripDetailScreen() {
             </Text>
           ) : null}
           {isViewer ? <ViewOnlyBanner /> : null}
-          {isOwner ? (
+          {canEdit || isOwner ? (
             <View style={styles.actions}>
-              {trip.status !== 'archived' ? (
+              {isOwner && trip.status !== 'archived' ? (
                 <Pressable
                   onPress={handleArchive}
                   style={styles.iconButton}
@@ -247,16 +247,20 @@ export default function TripDetailScreen() {
                   <Ionicons name="archive-outline" size={22} color={colors.primary} />
                 </Pressable>
               ) : null}
-              <Pressable onPress={() => router.push(`/trip/${id}/edit`)} style={styles.iconButton}>
-                <Ionicons name="create-outline" size={22} color={colors.primary} />
-              </Pressable>
-              <DeleteIconButton
-                size="sm"
-                onPress={handleDelete}
-                disabled={deleting}
-                accessibilityLabel="Delete trip"
-                style={[styles.iconButton, deleting && styles.iconButtonDisabled]}
-              />
+              {canEdit ? (
+                <Pressable onPress={() => router.push(`/trip/${id}/edit`)} style={styles.iconButton}>
+                  <Ionicons name="create-outline" size={22} color={colors.primary} />
+                </Pressable>
+              ) : null}
+              {isOwner ? (
+                <DeleteIconButton
+                  size="sm"
+                  onPress={handleDelete}
+                  disabled={deleting}
+                  accessibilityLabel="Delete trip"
+                  style={[styles.iconButton, deleting && styles.iconButtonDisabled]}
+                />
+              ) : null}
             </View>
           ) : null}
 

@@ -108,9 +108,10 @@ function isRemoteCoverUrl(url: string): boolean {
 }
 
 function parseBudgetTarget(value?: string): number | undefined {
-  if (!value || value.trim() === '') return undefined;
-  const n = parseFloat(value);
-  return Number.isFinite(n) ? n : undefined;
+  const trimmed = value?.trim() ?? '';
+  if (trimmed === '' || trimmed === '.') return undefined;
+  const n = parseFloat(trimmed);
+  return Number.isFinite(n) && n >= 0 ? n : undefined;
 }
 
 /** Resolves cover for DB: uploads local picks, keeps https URLs, else default/existing. */

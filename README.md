@@ -66,6 +66,7 @@ Run in order in the Supabase SQL editor:
 13. `supabase/expense_splits.sql` (split expenses among travelers)
 14. `supabase/users_co_traveler_policy.sql` (traveler names/avatars on shared trips)
 15. `supabase/editor_invite_policies.sql` (editors can invite and share join links)
+15b. `supabase/editor_trip_update_policies.sql` (editors can update trip name, dates, budget, cover)
 16. `supabase/push_notifications.sql` (Expo push token + notification `type` / `data`)
 17. `supabase/trip_messages.sql` (trip-wide chat)
 18. `supabase/trip_messages_edit.sql` (edit own messages — skip if you just ran step 17 on a fresh DB)

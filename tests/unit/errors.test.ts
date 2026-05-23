@@ -14,7 +14,7 @@ describe('getErrorMessage', () => {
         'trip-save'
       )
     ).toBe(
-      'Only the trip owner can change trip details (name, destination, dates, budget, and cover photo).'
+      'Only the trip owner or an editor can change trip details (name, destination, dates, budget, and cover photo).'
     );
   });
 

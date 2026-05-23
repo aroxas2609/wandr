@@ -14,6 +14,30 @@ describe('validation schemas', () => {
     expect(result.success).toBe(true);
   });
 
+  it('accepts empty optional budget', () => {
+    const result = tripSchema.safeParse({
+      title: 'Paris Trip',
+      destination: 'Paris, France',
+      startDate: '2026-06-15',
+      endDate: '2026-06-22',
+      travelStyles: [],
+      budgetTarget: '',
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it('accepts budget field with only a decimal point while editing', () => {
+    const result = tripSchema.safeParse({
+      title: 'Paris Trip',
+      destination: 'Paris, France',
+      startDate: '2026-06-15',
+      endDate: '2026-06-22',
+      travelStyles: [],
+      budgetTarget: '.',
+    });
+    expect(result.success).toBe(true);
+  });
+
   it('rejects invalid date range', () => {
     const result = tripSchema.safeParse({
       title: 'Test',

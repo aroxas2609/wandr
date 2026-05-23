@@ -12,8 +12,9 @@ export const tripSchema = z
       .optional()
       .refine(
         (val) => {
-          if (!val || val.trim() === '') return true;
-          const n = parseFloat(val);
+          const trimmed = val?.trim() ?? '';
+          if (trimmed === '' || trimmed === '.') return true;
+          const n = parseFloat(trimmed);
           return Number.isFinite(n) && n >= 0;
         },
         { message: 'Budget must be zero or positive' }

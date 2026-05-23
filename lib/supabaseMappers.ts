@@ -29,7 +29,7 @@ export function mapTripToDb(trip: Partial<Trip> & { id: string }) {
     cover_url: trip.coverUrl,
     start_date: trip.startDate,
     end_date: trip.endDate,
-    budget_target: trip.budgetTarget,
+    budget_target: numberToNull(trip.budgetTarget),
     travel_styles: trip.travelStyles,
     status: trip.status,
   };
